@@ -1,34 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unicrud</title>
     <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div id="app">
-        <h1>Test App</h1>
+  </head>
+  <body>
 
-        <div id="create-section">
-            <input id="item-name" type="text" placeholder="Enter item name" required>
-            <input id="item-tags" type="text" placeholder="Enter tags (comma separated)">
-            <button id="create-button">Add Item</button>
+    <div class="app-container">
+
+      <!-- home screen -->
+      <div class="screen" id="home-screen">
+        <div class="top-nav-bar">
+          <h2 class="logo">Unicrud</h2>
+          <div class="flex-right">        
+            <button class="btn btn-primary" onclick="navigateToScreen('edit-item-screen')">+ add</button>
+          </div>
         </div>
-
+        <div class="screen-title">Items</div>
         <div id="controls">
-            <input id="search-input" type="text" placeholder="Search items">
-            <select id="sort-select">
-                <option value="name-asc">Name (A-Z)</option>
-                <option value="name-desc">Name (Z-A)</option>
-                <option value="created-asc">Created (Oldest first)</option>
-                <option value="created-desc">Created (Newest first)</option>
-            </select>
-        </div>
 
-        <ul id="item-list"></ul>
-    </div>
+          <div class="input-container">
+            <input type="text" id="search-input" placeholder="Search items" />
+            <button class="clear-input">×</button>
+          </div>
+
+          <select id="sort-select">
+              <option value="name-asc">Name (A-Z)</option>
+              <option value="name-desc">Name (Z-A)</option>
+              <option value="created-asc">Created (Oldest first)</option>
+              <option value="created-desc">Created (Newest first)</option>
+          </select>
+        </div>
+        <ul class="card-list" id="item-list"></ul>
+      </div>
+
+      <!-- edit item screen -->
+      <div class="screen hidden" id="edit-item-screen">
+        <div class="back-btn" onclick="navigateToScreen('home-screen');">Back</div>
+        <div class="screen-title">Add item</div>
+        <div class="input-container">
+          <input id="item-name" type="text" placeholder="Enter item name" required />
+          <button class="clear-input">×</button>
+        </div>
+        <div class="input-container">
+          <input id="item-tags" type="text" placeholder="Enter tags (comma separated)" />
+          <button class="clear-input">×</button>
+        </div>
+        <button class="btn btn-primary" id="add-item-button">Add Item</button>
+      </div>
+
+      <!-- view item screen -->
+      <div class="screen hidden" id="view-item-screen">
+        <div class="back-btn" onclick="navigateToScreen('home-screen');">Back</div>
+        <div class="screen-title">View item</div>
+        <div id="item-detail-name"></div>
+        <div id="item-detail-tags"></div>
+        <div id="item-detail-content"></div>
+        <button class="btn btn-outline" onclick="navigateToScreen('edit-item-screen');">Edit Item</button>
+      </div>
+
+    </div>  
 
     <script src="app.js"></script>
-</body>
+
+  </body>
 </html>
