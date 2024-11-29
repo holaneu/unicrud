@@ -50,19 +50,18 @@ const db = {
 /*
 let allDataItems = [];
 let filteredDataItems = [];
-let currentDataItem = null;
 */
+let currentDataItem = null;
 
 // Event listeners for UI elements
 document.getElementById('search-input').addEventListener('input', filterAndRender);
 document.getElementById('sort-select').addEventListener('change', filterAndRender);
-document.getElementById('add-item-button').addEventListener('click', createItem);
 
 
 // components
 function renderItemCard(id,name,tags){
   return `
-    <div class="card-item" data-id="${id}" onclick="openItemDetail('${id}')">
+    <div class="card-item" data-id="${id}" onclick="viewItem('${id}')">
       <div class="card-content">
         <span class="card-title">${name}</span>
         <span class="card-badge">${name}</span>
@@ -85,29 +84,6 @@ function navigateToScreen(screenId) {
   document.getElementById(screenId).classList.remove('hidden');
 }
 
-function createItem() {
-  const nameInput = document.getElementById('item-name');
-  const tagsInput = document.getElementById('item-tags');
-  
-  if (nameInput.value.trim() === '') {
-    alert('Item name cannot be empty');
-    return;
-  }
-  
-  const newItem = {
-    id: generateId(),
-    name: nameInput.value.trim(),
-    created: Date.now(),
-    modified: Date.now(),
-    tags: tagsInput.value.trim() ? tagsInput.value.trim().split(',').map(tag => tag.trim()) : [],
-    content: ""
-  };
-  
-  db.addDataItem(newItem);
-  renderItems();
-  resetForm();
-}
-
 function renderItems(itemsToRender) {
   const itemList = document.getElementById('item-list');
   const items = itemsToRender ? itemsToRender : db.getData();  
@@ -120,25 +96,55 @@ function renderItems(itemsToRender) {
   });
 }
 
-function openItemDetail(openedItemId){
-  const itemDetailTitle = document.querySelector('#view-item-screen .screen-title');
-  const itemDetailName = document.getElementById('item-detail-name');
-  const itemDetailTags = document.getElementById('item-detail-tags');
-  const itemDetailContent = document.getElementById('item-detail-content');
+function createItem() {
+  const formName = document.querySelector('#add-item-screen #add-item-name');
+  const formTags = document.querySelector('#add-item-screen #add-item-tags');
+  const formContent = document.querySelector('#add-item-screen #add-item-content');
+  
+  if (formName.value.trim() === '') {
+    alert('Item name cannot be empty');
+    return;
+  }
+  
+  const newItem = {
+    id: generateId(),
+    name: formName.value.trim(),
+    created: Date.now(),
+    modified: Date.now(),
+    tags: formTags.value.trim() ? formTags.value.trim().split(',').map(tag => tag.trim()) : [],
+    content: formContent.value.trim(),
+  };
+  
+  db.addDataItem(newItem);
+  renderItems();
+  alert("Item added");
+  // reset form
+  formName.value = '';
+  formTags.value = '';
+  formContent.value = '';  
+}
+
+function viewItem(viewedItemId){
+  const uiScreenTitle = document.querySelector('#view-item-screen .screen-title');
+  const uiItemName = document.querySelector('#view-item-screen #view-item-name'); //.getElementById('item-detail-name');
+  const uiItemTags = document.querySelector('#view-item-screen #view-item-tags'); //.getElementById('item-detail-tags');
+  const uiItemContent = document.querySelector('#view-item-screen #view-item-content'); //.getElementById('item-detail-content');
+  const uiEditItemBtn = document.querySelector('#view-item-screen #view-item-edit-btn'); //.getElementById('item-detail-edit-btn');
   
   const items = db.getData();
-  const item = items.find(i => i.id === openedItemId);
-  console.log(item);
-  itemDetailTitle.innerText = item && item.name ? item.name : 'View item';
-  itemDetailName.innerText = item && item.name ? 'Name: ' + item.name : '';
-  itemDetailTags.innerText = item && item.tags ? 'Tags: ' + item.tags.join(', ') : '';
-  itemDetailContent.innerText = item && item.content ? 'Content: ' + item.content : '';
+  const item = items.find(i => i.id === viewedItemId);
+
+  uiScreenTitle.innerText = item && item.name ? item.name : 'View item';
+  uiItemName.innerText = item && item.name ? 'Name: ' + item.name : '';
+  uiItemTags.innerText = item && item.tags ? 'Tags: ' + item.tags.join(', ') : '';
+  uiItemContent.innerText = item && item.content ? 'Content: \n' + item.content : '';
+  //uiEditItemBtn.addEventListener('click', () => editItem(item.id), { once: true });
+  uiEditItemBtn.setAttribute("onclick", "editItem('" + item.id + "')");
   navigateToScreen("view-item-screen"); 
 }
 
-function resetForm() {
-  document.getElementById('item-name').value = '';
-  document.getElementById('item-tags').value = '';
+function editItem(itemId){
+  alert(`Attempt to edit item "${itemId}"`);
 }
 
 // Function to search and filter items
