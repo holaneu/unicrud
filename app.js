@@ -1,3 +1,4 @@
+// configs
 const appConfigs = {
   app_id: "unicrud",
   app_name: "Unicrud",
@@ -47,16 +48,19 @@ const db = {
   }
 };
 
-/* REMOVE:
-let allDataItems = [];
-let filteredDataItems = [];
-let currentDataItem = null;
-*/
+
+// global vars
+let currentSelectedTag = ""; // Keeps track of the selected tag
+
 
 // Event listeners for UI elements
 document.getElementById('search-input').addEventListener('input', renderItems);
 document.getElementById('sort-select').addEventListener('change', renderItems);
-document.getElementById('tag-select').addEventListener('change', renderItems);
+document.getElementById('tag-select').addEventListener('change', (event) => {
+  currentSelectedTag = event.target.value; // Update global state
+  renderItems();
+});
+
 
 
 // components
@@ -83,50 +87,6 @@ function navigateToScreen(screenId) {
   screens.forEach(screen => screen.classList.add('hidden'));
   document.getElementById(screenId).classList.remove('hidden');
 }
-
-/*
-function renderItems() {
-  const searchQuery = document.getElementById('search-input').value.toLowerCase();
-  const sortCriteria = document.getElementById('sort-select').value;
-  const selectedTag = document.getElementById('tag-select').value;
-
-  let items = db.getData();
-
-  if (searchQuery) {
-    items = items.filter(item => 
-      item.name.toLowerCase().includes(searchQuery) || 
-      (item.content && item.content.toLowerCase().includes(searchQuery))
-    );
-  }
-
-  if (selectedTag) {
-    if (selectedTag === "__no_tags__") {
-      items = items.filter(item => !item.tags || item.tags.length === 0); // Items with no tags
-    } else {
-      items = items.filter(item => item.tags && item.tags.includes(selectedTag));
-    }
-  }
-
-  if (sortCriteria === 'name-asc') {
-    items.sort((a, b) => a.name.localeCompare(b.name));
-  } else if (sortCriteria === 'name-desc') {
-    items.sort((a, b) => b.name.localeCompare(a.name));
-  } else if (sortCriteria === 'created-asc') {
-    items.sort((a, b) => a.created - b.created);
-  } else if (sortCriteria === 'created-desc') {
-    items.sort((a, b) => b.created - a.created);
-  }
-
-  const itemList = document.getElementById('item-list');
-  itemList.innerHTML = '';
-
-  items.forEach(item => {
-    const listItem = document.createElement('li');
-    listItem.innerHTML = renderItemCard(item.id, item.name, item.tags);
-    itemList.appendChild(listItem);
-  });
-}
-  */
 
 function renderItems() {
   const searchQuery = document.getElementById('search-input').value.toLowerCase();
@@ -265,7 +225,6 @@ function saveEditedItem(itemId) {
     return;
   }
 
-  // Retrieve the original item
   const items = db.getData();
   const originalItem = items.find(item => item.id === itemId);
 
@@ -274,9 +233,8 @@ function saveEditedItem(itemId) {
     return;
   }
 
-  // Create a copy of the original item and update only editable fields
   const updatedItem = {
-    ...originalItem, // Copy all properties of the original object
+    ...originalItem,
     name: formName.value.trim(),
     tags: formTags.value.trim() ? formTags.value.trim().split(',').map(tag => tag.trim()) : [],
     content: formContent.value.trim(),
@@ -284,13 +242,16 @@ function saveEditedItem(itemId) {
   };
 
   db.updateDataItem(updatedItem);
-  
+
   populateTagSelect();
+  document.getElementById('tag-select').value = currentSelectedTag; // Restore selected tag
+
   renderItems();
 
   alert("Item updated successfully!");
   navigateToScreen("home-screen");
 }
+
 
 
 function searchItems(query, items) {
@@ -330,10 +291,13 @@ function populateTagSelect() {
   const uniqueTags = getUniqueTags(items);
   const tagSelect = document.getElementById('tag-select');
 
+  // Preserve the currently selected tag
+  const previousSelection = currentSelectedTag || tagSelect.value;
+
   tagSelect.innerHTML = `
     <option value="">All Tags</option>
     <option value="__no_tags__">No Tags</option>
-  `; // Default options
+  `;
 
   uniqueTags.forEach(tag => {
     const option = document.createElement('option');
@@ -341,6 +305,10 @@ function populateTagSelect() {
     option.textContent = tag;
     tagSelect.appendChild(option);
   });
+
+  // Restore the previous selection
+  tagSelect.value = previousSelection;
+  currentSelectedTag = previousSelection; // Update global state
 }
 
 
@@ -349,6 +317,7 @@ function populateTagSelect() {
 window.addEventListener('DOMContentLoaded', () => {
   
   populateTagSelect();
+  currentSelectedTag = document.getElementById('tag-select').value; // Initialize selected tag
   renderItems();
 
   const clearButtons = document.querySelectorAll(".clear-input");    
