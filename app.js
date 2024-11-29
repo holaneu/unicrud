@@ -64,8 +64,7 @@ function renderItemCard(id,name,tags){
     <div class="card-item" data-id="${id}" onclick="viewItem('${id}')">
       <div class="card-content">
         <span class="card-title">${name}</span>
-        <span class="card-badge">${name}</span>
-        <div class="card-label">${tags.join(', ')}</div>
+        <span class="card-badge">${tags.join(', ')}</span>
       </div>
     </div>
   `;
