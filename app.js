@@ -84,6 +84,7 @@ function navigateToScreen(screenId) {
   document.getElementById(screenId).classList.remove('hidden');
 }
 
+/*
 function renderItems() {
   const searchQuery = document.getElementById('search-input').value.toLowerCase();
   const sortCriteria = document.getElementById('sort-select').value;
@@ -99,7 +100,11 @@ function renderItems() {
   }
 
   if (selectedTag) {
-    items = items.filter(item => item.tags && item.tags.includes(selectedTag));
+    if (selectedTag === "__no_tags__") {
+      items = items.filter(item => !item.tags || item.tags.length === 0); // Items with no tags
+    } else {
+      items = items.filter(item => item.tags && item.tags.includes(selectedTag));
+    }
   }
 
   if (sortCriteria === 'name-asc') {
@@ -121,6 +126,55 @@ function renderItems() {
     itemList.appendChild(listItem);
   });
 }
+  */
+
+function renderItems() {
+  const searchQuery = document.getElementById('search-input').value.toLowerCase();
+  const sortCriteria = document.getElementById('sort-select').value;
+  const selectedTag = document.getElementById('tag-select').value;
+
+  let items = db.getData();
+
+  // Ensure the dropdown reflects the selected filter
+  const tagSelect = document.getElementById('tag-select');
+  tagSelect.value = selectedTag;
+
+  if (searchQuery) {
+    items = items.filter(item => 
+      item.name.toLowerCase().includes(searchQuery) || 
+      (item.content && item.content.toLowerCase().includes(searchQuery))
+    );
+  }
+
+  if (selectedTag) {
+    if (selectedTag === "__no_tags__") {
+      items = items.filter(item => !item.tags || item.tags.length === 0);
+    } else {
+      items = items.filter(item => item.tags && item.tags.includes(selectedTag));
+    }
+  }
+
+  if (sortCriteria === 'name-asc') {
+    items.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sortCriteria === 'name-desc') {
+    items.sort((a, b) => b.name.localeCompare(a.name));
+  } else if (sortCriteria === 'created-asc') {
+    items.sort((a, b) => a.created - b.created);
+  } else if (sortCriteria === 'created-desc') {
+    items.sort((a, b) => b.created - a.created);
+  }
+
+  const itemList = document.getElementById('item-list');
+  itemList.innerHTML = '';
+
+  items.forEach(item => {
+    const listItem = document.createElement('li');
+    listItem.innerHTML = renderItemCard(item.id, item.name, item.tags);
+    itemList.appendChild(listItem);
+  });
+}
+
+
 
 
 function createItem() {
@@ -230,8 +284,10 @@ function saveEditedItem(itemId) {
   };
 
   db.updateDataItem(updatedItem);
-  renderItems();
+  
   populateTagSelect();
+  renderItems();
+
   alert("Item updated successfully!");
   navigateToScreen("home-screen");
 }
@@ -273,7 +329,11 @@ function populateTagSelect() {
   const items = db.getData();
   const uniqueTags = getUniqueTags(items);
   const tagSelect = document.getElementById('tag-select');
-  tagSelect.innerHTML = '<option value="">All Tags</option>'; // Clear and add default option
+
+  tagSelect.innerHTML = `
+    <option value="">All Tags</option>
+    <option value="__no_tags__">No Tags</option>
+  `; // Default options
 
   uniqueTags.forEach(tag => {
     const option = document.createElement('option');
@@ -284,10 +344,12 @@ function populateTagSelect() {
 }
 
 
+
 // page initialization      
 window.addEventListener('DOMContentLoaded', () => {
-  renderItems();
+  
   populateTagSelect();
+  renderItems();
 
   const clearButtons = document.querySelectorAll(".clear-input");    
   clearButtons.forEach(button => {
