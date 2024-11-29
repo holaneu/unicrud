@@ -125,27 +125,91 @@ function createItem() {
 }
 
 function viewItem(viewedItemId){
-  const uiScreenTitle = document.querySelector('#view-item-screen .screen-title');
-  const uiItemName = document.querySelector('#view-item-screen #view-item-name'); //.getElementById('item-detail-name');
-  const uiItemTags = document.querySelector('#view-item-screen #view-item-tags'); //.getElementById('item-detail-tags');
-  const uiItemContent = document.querySelector('#view-item-screen #view-item-content'); //.getElementById('item-detail-content');
-  const uiEditItemBtn = document.querySelector('#view-item-screen #view-item-edit-btn'); //.getElementById('item-detail-edit-btn');
-  
   const items = db.getData();
   const item = items.find(i => i.id === viewedItemId);
 
-  uiScreenTitle.innerText = item && item.name ? item.name : 'View item';
-  uiItemName.innerText = item && item.name ? 'Name: ' + item.name : '';
-  uiItemTags.innerText = item && item.tags ? 'Tags: ' + item.tags.join(', ') : '';
-  uiItemContent.innerText = item && item.content ? 'Content: \n' + item.content : '';
-  //uiEditItemBtn.addEventListener('click', () => editItem(item.id), { once: true });
+  if(!item) {
+    alert("Item not found!");
+    return;
+  }
+
+  const uiScreenTitle = document.querySelector('#view-item-screen .screen-title');
+  const uiItemName = document.querySelector('#view-item-screen #view-item-name'); 
+  const uiItemTags = document.querySelector('#view-item-screen #view-item-tags'); 
+  const uiItemContent = document.querySelector('#view-item-screen #view-item-content'); 
+  const uiEditItemBtn = document.querySelector('#view-item-screen #view-item-edit-btn');   
+
+  uiScreenTitle.innerText = item.name ? item.name : 'View item';
+  uiItemName.innerText = item.name ? 'Name: ' + item.name : '';
+  uiItemTags.innerText = item.tags ? 'Tags: ' + item.tags.join(', ') : '';
+  uiItemContent.innerText = item.content ? 'Content: \n' + item.content : '';
   uiEditItemBtn.setAttribute("onclick", "editItem('" + item.id + "')");
+
   navigateToScreen("view-item-screen"); 
 }
 
-function editItem(itemId){
-  alert(`Attempt to edit item "${itemId}"`);
+function editItem(editedItemId) {
+  const items = db.getData();
+  const item = items.find(i => i.id === editedItemId);
+
+  if (!item) {
+    alert("Item not found!");
+    return;
+  }
+
+  const formName = document.querySelector('#edit-item-screen #edit-item-name');
+  const formTags = document.querySelector('#edit-item-screen #edit-item-tags');
+  const formContent = document.querySelector('#edit-item-screen #edit-item-content');
+
+  formName.value = item.name || '';
+  formTags.value = item.tags ? item.tags.join(', ') : '';
+  formContent.value = item.content || '';
+
+  const formSaveBtn = document.querySelector('#edit-item-screen #edit-item-save-btn');
+  formSaveBtn.onclick = function () {
+    saveEditedItem(editedItemId);
+  };
+
+  navigateToScreen("edit-item-screen");
 }
+
+function saveEditedItem(itemId) {
+  const formName = document.querySelector('#edit-item-screen #edit-item-name');
+  const formTags = document.querySelector('#edit-item-screen #edit-item-tags');
+  const formContent = document.querySelector('#edit-item-screen #edit-item-content');
+
+  if (formName.value.trim() === '') {
+    alert("Item name cannot be empty");
+    return;
+  }
+
+  // Retrieve the original item
+  const items = db.getData();
+  const originalItem = items.find(item => item.id === itemId);
+
+  if (!originalItem) {
+    alert("Item not found!");
+    return;
+  }
+
+  // Create a copy of the original item and update only editable fields
+  const updatedItem = {
+    ...originalItem, // Copy all properties of the original object
+    name: formName.value.trim(),
+    tags: formTags.value.trim() ? formTags.value.trim().split(',').map(tag => tag.trim()) : [],
+    content: formContent.value.trim(),
+    modified: Date.now()
+  };
+
+  db.updateDataItem(updatedItem);
+
+  renderItems();
+  alert("Item updated successfully!");
+  navigateToScreen("home-screen");
+}
+
+
+
 
 // Function to search and filter items
 function searchItems(query, items) {
