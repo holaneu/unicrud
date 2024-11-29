@@ -47,11 +47,11 @@ const db = {
   }
 };
 
-/*
+/* REMOVE:
 let allDataItems = [];
 let filteredDataItems = [];
-*/
 let currentDataItem = null;
+*/
 
 // Event listeners for UI elements
 document.getElementById('search-input').addEventListener('input', filterAndRender);
@@ -86,10 +86,18 @@ function navigateToScreen(screenId) {
 
 function renderItems(itemsToRender) {
   const itemList = document.getElementById('item-list');
-  const items = itemsToRender ? itemsToRender : db.getData();  
+  const searchQuery = document.getElementById('search-input').value;
+  const sortCriteria = document.getElementById('sort-select').value;
+
   itemList.innerHTML = '';
+
+  const items = itemsToRender ? itemsToRender : db.getData();  
+
+  // filter and sort items
+  let filteredItems = searchItems(searchQuery, items);
+  filteredItems = sortItems(sortCriteria, filteredItems);
   
-  items.forEach(item => {
+  filteredItems.forEach(item => {
     const listItem = document.createElement('li');
     listItem.innerHTML = renderItemCard(item.id, item.name, item.tags);
     itemList.appendChild(listItem);
@@ -202,16 +210,12 @@ function saveEditedItem(itemId) {
   };
 
   db.updateDataItem(updatedItem);
-
   renderItems();
   alert("Item updated successfully!");
   navigateToScreen("home-screen");
 }
 
 
-
-
-// Function to search and filter items
 function searchItems(query, items) {
   return items.filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
 }
@@ -226,6 +230,10 @@ function sortItems(criteria, items) {
     sortedItems.sort((a, b) => a.created - b.created);
   } else if (criteria === 'created-desc') {
     sortedItems.sort((a, b) => b.created - a.created);
+  } else if (criteria === 'modified-asc') {
+    sortedItems.sort((a, b) => a.modified - b.modified);
+  } else if (criteria === 'modified-desc') {
+    sortedItems.sort((a, b) => b.modified - a.modified);
   }
   return sortedItems;
 }
