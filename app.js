@@ -94,9 +94,9 @@ function renderItems(itemsToRender) {
 
   // filter and sort items
   let filteredItems = searchItems(searchQuery, items);
-  filteredItems = sortItems(sortCriteria, filteredItems);
+  let sortedItems = sortItems(sortCriteria, filteredItems);
   
-  filteredItems.forEach(item => {
+  sortedItems.forEach(item => {
     const listItem = document.createElement('li');
     listItem.innerHTML = renderItemCard(item.id, item.name, item.tags);
     itemList.appendChild(listItem);
