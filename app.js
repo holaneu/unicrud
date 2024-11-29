@@ -54,8 +54,9 @@ let currentDataItem = null;
 */
 
 // Event listeners for UI elements
-document.getElementById('search-input').addEventListener('input', filterAndRender);
-document.getElementById('sort-select').addEventListener('change', filterAndRender);
+document.getElementById('search-input').addEventListener('input', renderItems);
+document.getElementById('sort-select').addEventListener('change', renderItems);
+document.getElementById('tag-select').addEventListener('change', renderItems);
 
 
 // components
@@ -83,25 +84,44 @@ function navigateToScreen(screenId) {
   document.getElementById(screenId).classList.remove('hidden');
 }
 
-function renderItems(itemsToRender) {
-  const itemList = document.getElementById('item-list');
-  const searchQuery = document.getElementById('search-input').value;
+function renderItems() {
+  const searchQuery = document.getElementById('search-input').value.toLowerCase();
   const sortCriteria = document.getElementById('sort-select').value;
+  const selectedTag = document.getElementById('tag-select').value;
 
+  let items = db.getData();
+
+  if (searchQuery) {
+    items = items.filter(item => 
+      item.name.toLowerCase().includes(searchQuery) || 
+      (item.content && item.content.toLowerCase().includes(searchQuery))
+    );
+  }
+
+  if (selectedTag) {
+    items = items.filter(item => item.tags && item.tags.includes(selectedTag));
+  }
+
+  if (sortCriteria === 'name-asc') {
+    items.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sortCriteria === 'name-desc') {
+    items.sort((a, b) => b.name.localeCompare(a.name));
+  } else if (sortCriteria === 'created-asc') {
+    items.sort((a, b) => a.created - b.created);
+  } else if (sortCriteria === 'created-desc') {
+    items.sort((a, b) => b.created - a.created);
+  }
+
+  const itemList = document.getElementById('item-list');
   itemList.innerHTML = '';
 
-  const items = itemsToRender ? itemsToRender : db.getData();  
-
-  // filter and sort items
-  let filteredItems = searchItems(searchQuery, items);
-  let sortedItems = sortItems(sortCriteria, filteredItems);
-  
-  sortedItems.forEach(item => {
+  items.forEach(item => {
     const listItem = document.createElement('li');
     listItem.innerHTML = renderItemCard(item.id, item.name, item.tags);
     itemList.appendChild(listItem);
   });
 }
+
 
 function createItem() {
   const formName = document.querySelector('#add-item-screen #add-item-name');
@@ -124,6 +144,7 @@ function createItem() {
   
   db.addDataItem(newItem);
   renderItems();
+  populateTagSelect();
   alert("Item added");
   // reset form
   formName.value = '';
@@ -210,6 +231,7 @@ function saveEditedItem(itemId) {
 
   db.updateDataItem(updatedItem);
   renderItems();
+  populateTagSelect();
   alert("Item updated successfully!");
   navigateToScreen("home-screen");
 }
@@ -237,17 +259,35 @@ function sortItems(criteria, items) {
   return sortedItems;
 }
 
-function filterAndRender() {
-  const searchQuery = document.getElementById('search-input').value;
-  const sortCriteria = document.getElementById('sort-select').value;
-  let items = searchItems(searchQuery, db.getData());
-  items = sortItems(sortCriteria, items);
-  renderItems(items);
+function getUniqueTags(items) {
+  const tags = new Set();
+  items.forEach(item => {
+    if (item.tags && Array.isArray(item.tags)) {
+      item.tags.forEach(tag => tags.add(tag));
+    }
+  });
+  return Array.from(tags).sort();
 }
+
+function populateTagSelect() {
+  const items = db.getData();
+  const uniqueTags = getUniqueTags(items);
+  const tagSelect = document.getElementById('tag-select');
+  tagSelect.innerHTML = '<option value="">All Tags</option>'; // Clear and add default option
+
+  uniqueTags.forEach(tag => {
+    const option = document.createElement('option');
+    option.value = tag;
+    option.textContent = tag;
+    tagSelect.appendChild(option);
+  });
+}
+
 
 // page initialization      
 window.addEventListener('DOMContentLoaded', () => {
   renderItems();
+  populateTagSelect();
 
   const clearButtons = document.querySelectorAll(".clear-input");    
   clearButtons.forEach(button => {

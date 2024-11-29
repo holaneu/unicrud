@@ -355,3 +355,21 @@ textarea {
 .clear-input:hover {
   color: white;
 }
+
+.dropdown {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+    top: 30px;
+}
+
+.dropdown.hidden {
+  display: none;
+}
