@@ -159,14 +159,23 @@ function createItem() {
   db.addDataItem(newItem);
   renderItems();
   populateTagSelect();
-  alert("Item added");
-  // reset form
-  formName.value = '';
-  formTags.value = '';
-  formContent.value = '';  
+
+  // Ask user about their next action
+  const createAnother = confirm("Item added successfully. Would you like to create another item?");
+  
+  if (!createAnother) {
+    navigateToScreen('home-screen');
+  } else {
+    // Clear form for next item
+    formName.value = '';
+    formTags.value = '';
+    formContent.value = '';
+    // Focus on the name field for better UX
+    formName.focus();
+  }
 }
 
-function viewItem(viewedItemId){
+function viewItem(viewedItemId) {
   const items = db.getData();
   const item = items.find(i => i.id === viewedItemId);
 
@@ -179,17 +188,29 @@ function viewItem(viewedItemId){
   const uiItemName = document.querySelector('#view-item-screen #view-item-name'); 
   const uiItemTags = document.querySelector('#view-item-screen #view-item-tags'); 
   const uiItemContent = document.querySelector('#view-item-screen #view-item-content'); 
-  const uiEditItemBtn = document.querySelector('#view-item-screen #view-item-edit-btn');   
+  const uiEditBtn = document.querySelector('#view-item-screen .edit-btn');
+  const uiDeleteBtn = document.querySelector('#view-item-screen .delete-btn');
 
   uiScreenTitle.innerText = item.name ? item.name : 'View item';
   uiItemName.innerText = item.name ? 'Name: ' + item.name : '';
   uiItemTags.innerText = item.tags ? 'Tags: ' + item.tags.join(', ') : '';
   uiItemContent.innerText = item.content ? 'Content: \n' + item.content : '';
-  uiEditItemBtn.setAttribute("onclick", "editItem('" + item.id + "')");
+  
+  uiEditBtn.onclick = () => editItem(item.id);
+  uiDeleteBtn.onclick = () => deleteItem(item.id);
 
   navigateToScreen("view-item-screen"); 
 }
 
+function deleteItem(itemId) {
+  if (confirm("Do you really want to delete this item?")) {
+    db.deleteDataItem(itemId);
+    renderItems();
+    navigateToScreen("home-screen");
+  }
+}
+
+// Update the back button in edit screen to return to view screen
 function editItem(editedItemId) {
   const items = db.getData();
   const item = items.find(i => i.id === editedItemId);
@@ -202,14 +223,19 @@ function editItem(editedItemId) {
   const formName = document.querySelector('#edit-item-screen #edit-item-name');
   const formTags = document.querySelector('#edit-item-screen #edit-item-tags');
   const formContent = document.querySelector('#edit-item-screen #edit-item-content');
+  const backBtn = document.querySelector('#edit-item-screen .back-btn');
 
   formName.value = item.name || '';
   formTags.value = item.tags ? item.tags.join(', ') : '';
   formContent.value = item.content || '';
 
+  // Update back button to return to view screen
+  backBtn.onclick = () => viewItem(editedItemId);
+
   const formSaveBtn = document.querySelector('#edit-item-screen #edit-item-save-btn');
   formSaveBtn.onclick = function () {
     saveEditedItem(editedItemId);
+    viewItem(editedItemId); // Return to view screen after saving
   };
 
   navigateToScreen("edit-item-screen");

@@ -83,12 +83,17 @@
 
       <!-- view item screen -->
       <div class="screen hidden" id="view-item-screen">
-        <div class="back-btn" onclick="navigateToScreen('home-screen');"></div>
+        <div class="top-nav-bar">
+          <div class="back-btn" onclick="navigateToScreen('home-screen');"></div>
+          <div class="flex-right">
+            <button class="icon-btn edit-btn" onclick=""></button>
+            <button class="icon-btn delete-btn" onclick=""></button>
+          </div>
+        </div>
         <div class="screen-title">View item</div>
         <div id="view-item-name"></div>
         <div id="view-item-tags"></div>
         <div id="view-item-content"></div>
-        <button class="btn btn-outline" id="view-item-edit-btn">Edit Item</button>
       </div>
 
     </div>  
