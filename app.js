@@ -51,6 +51,7 @@ const db = {
 
 // global vars
 let currentSelectedTag = ""; // Keeps track of the selected tag
+let currentTagInput = null; // Will store the current tag input instance
 
 
 // Event listeners for UI elements
@@ -83,9 +84,23 @@ function generateId(length = 10) {
 }
 
 function navigateToScreen(screenId) {
+  // Clean up any existing tag inputs
+  cleanupTagInputs();
+  
+  // Hide all screens
   const screens = document.querySelectorAll('.screen');
   screens.forEach(screen => screen.classList.add('hidden'));
-  document.getElementById(screenId).classList.remove('hidden');
+  
+  // Show target screen
+  const targetScreen = document.getElementById(screenId);
+  targetScreen.classList.remove('hidden');
+  
+  // Initialize tag inputs for the new screen if needed
+  if (screenId === 'add-item-screen') {
+    currentTagInput = initializeTagInput(
+      document.querySelector('#add-item-screen #add-item-tags')
+    );
+  }
 }
 
 function renderItems() {
@@ -139,7 +154,6 @@ function renderItems() {
 
 function createItem() {
   const formName = document.querySelector('#add-item-screen #add-item-name');
-  const formTags = document.querySelector('#add-item-screen #add-item-tags');
   const formContent = document.querySelector('#add-item-screen #add-item-content');
   
   if (formName.value.trim() === '') {
@@ -152,7 +166,7 @@ function createItem() {
     name: formName.value.trim(),
     created: Date.now(),
     modified: Date.now(),
-    tags: formTags.value.trim() ? formTags.value.trim().split(',').map(tag => tag.trim()) : [],
+    tags: currentTagInput.getTags(), // Use currentTagInput instead of tagInput
     content: formContent.value.trim(),
   };
   
@@ -168,9 +182,8 @@ function createItem() {
   } else {
     // Clear form for next item
     formName.value = '';
-    formTags.value = '';
     formContent.value = '';
-    // Focus on the name field for better UX
+    currentTagInput = initializeTagInput(document.querySelector('#add-item-screen #add-item-tags')); // Reinitialize tags
     formName.focus();
   }
 }
@@ -220,30 +233,32 @@ function editItem(editedItemId) {
     return;
   }
 
-  const formName = document.querySelector('#edit-item-screen #edit-item-name');
-  const formTags = document.querySelector('#edit-item-screen #edit-item-tags');
-  const formContent = document.querySelector('#edit-item-screen #edit-item-content');
-  const backBtn = document.querySelector('#edit-item-screen .back-btn');
+  // First navigate to edit screen
+  navigateToScreen("edit-item-screen");
 
+  // Then initialize the form
+  const formName = document.querySelector('#edit-item-screen #edit-item-name');
+  const formContent = document.querySelector('#edit-item-screen #edit-item-content');
+  const formTags = document.querySelector('#edit-item-screen #edit-item-tags');
+  
   formName.value = item.name || '';
-  formTags.value = item.tags ? item.tags.join(', ') : '';
   formContent.value = item.content || '';
 
-  // Update back button to return to view screen
+  // Initialize tag input with existing tags
+  currentTagInput = initializeTagInput(formTags, item.tags || []);
+  
+  const backBtn = document.querySelector('#edit-item-screen .back-btn');
   backBtn.onclick = () => viewItem(editedItemId);
 
   const formSaveBtn = document.querySelector('#edit-item-screen #edit-item-save-btn');
   formSaveBtn.onclick = function () {
     saveEditedItem(editedItemId);
-    viewItem(editedItemId); // Return to view screen after saving
+    viewItem(editedItemId);
   };
-
-  navigateToScreen("edit-item-screen");
 }
 
 function saveEditedItem(itemId) {
   const formName = document.querySelector('#edit-item-screen #edit-item-name');
-  const formTags = document.querySelector('#edit-item-screen #edit-item-tags');
   const formContent = document.querySelector('#edit-item-screen #edit-item-content');
 
   if (formName.value.trim() === '') {
@@ -262,16 +277,14 @@ function saveEditedItem(itemId) {
   const updatedItem = {
     ...originalItem,
     name: formName.value.trim(),
-    tags: formTags.value.trim() ? formTags.value.trim().split(',').map(tag => tag.trim()) : [],
+    tags: currentTagInput.getTags(), // Add tags from currentTagInput
     content: formContent.value.trim(),
     modified: Date.now()
   };
 
   db.updateDataItem(updatedItem);
-
   populateTagSelect();
-  document.getElementById('tag-select').value = currentSelectedTag; // Restore selected tag
-
+  document.getElementById('tag-select').value = currentSelectedTag;
   renderItems();
 
   alert("Item updated successfully!");
@@ -337,7 +350,156 @@ function populateTagSelect() {
   currentSelectedTag = previousSelection; // Update global state
 }
 
+// Add this new function for tag input component
+function initializeTagInput(inputElement, initialTags = []) {
+  // Check if input element exists
+  if (!inputElement || !inputElement.parentNode) {
+    console.error('Invalid input element for tag initialization');
+    return {
+      getTags: () => [] // Return empty array if initialization fails
+    };
+  }
 
+  const container = document.createElement('div');
+  container.className = 'tag-input-container';
+  
+  const tagList = document.createElement('div');
+  tagList.className = 'tag-list';
+  
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'Type tag and press Enter or comma';
+  input.className = 'tag-input';
+  
+  const suggestionsContainer = document.createElement('div');
+  suggestionsContainer.className = 'tag-suggestions hidden';
+  
+  container.appendChild(tagList);
+  container.appendChild(input);
+  container.appendChild(suggestionsContainer);
+  
+  // Replace original input with our container
+  inputElement.parentNode.replaceChild(container, inputElement);
+  
+  // Keep track of current tags
+  let tags = [...initialTags];
+  
+  // Function to render tags
+  function renderTags() {
+    tagList.innerHTML = tags.map(tag => `
+      <span class="tag-pill">
+        ${tag}
+        <button class="tag-remove" data-tag="${tag}">×</button>
+      </span>
+    `).join('');
+    
+    // Add click handlers for remove buttons
+    tagList.querySelectorAll('.tag-remove').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const tagToRemove = btn.dataset.tag;
+        tags = tags.filter(t => t !== tagToRemove);
+        renderTags();
+      };
+    });
+  }
+  
+  // Function to add a new tag
+  function addTag(tagName) {
+    tagName = tagName.trim().toLowerCase();
+    if (tagName && !tags.includes(tagName)) {
+      tags.push(tagName);
+      renderTags();
+      input.value = '';
+      updateSuggestions('');
+    }
+  }
+  
+  // Function to show tag suggestions
+  function updateSuggestions(query) {
+    const allTags = getUniqueTags(db.getData());
+    const matchingTags = allTags
+      .filter(tag => 
+        tag.toLowerCase().includes(query.toLowerCase()) && 
+        !tags.includes(tag)
+      )
+      .slice(0, 5); // Show max 5 suggestions
+    
+    if (matchingTags.length && query) {
+      suggestionsContainer.innerHTML = matchingTags
+        .map(tag => `<div class="tag-suggestion">${tag}</div>`)
+        .join('');
+      suggestionsContainer.classList.remove('hidden');
+    } else {
+      suggestionsContainer.classList.add('hidden');
+    }
+  }
+  
+  // Event Listeners
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag(input.value);
+    } else if (e.key === 'Backspace' && input.value === '' && tags.length > 0) {
+      tags.pop();
+      renderTags();
+    }
+  });
+  
+  input.addEventListener('input', (e) => {
+    updateSuggestions(e.target.value);
+  });
+  
+  input.addEventListener('blur', () => {
+    // Small delay to allow clicking suggestions
+    setTimeout(() => {
+      suggestionsContainer.classList.add('hidden');
+    }, 200);
+  });
+  
+  suggestionsContainer.addEventListener('click', (e) => {
+    if (e.target.classList.contains('tag-suggestion')) {
+      addTag(e.target.textContent);
+      input.focus();
+    }
+  });
+  
+  // Initialize with any existing tags
+  renderTags();
+  
+  // Return method to get current tags
+  return {
+    getTags: () => tags
+  };
+}
+
+// Add this cleanup function
+function cleanupTagInputs() {
+  // Restore original input elements
+  const containers = document.querySelectorAll('.tag-input-container');
+  containers.forEach(container => {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Enter tags (comma separated)';
+    
+    // Set appropriate ID based on the screen
+    if (container.closest('#add-item-screen')) {
+      input.id = 'add-item-tags';
+    } else if (container.closest('#edit-item-screen')) {
+      input.id = 'edit-item-tags';
+    }
+    
+    const inputContainer = document.createElement('div');
+    inputContainer.className = 'input-container';
+    inputContainer.appendChild(input);
+    
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'clear-input';
+    inputContainer.appendChild(clearBtn);
+    
+    container.parentNode.replaceChild(inputContainer, container);
+  });
+}
 
 // page initialization      
 window.addEventListener('DOMContentLoaded', () => {
@@ -361,6 +523,11 @@ window.addEventListener('DOMContentLoaded', () => {
       }         
     });
   });
+
+  // Initialize empty tag input for add screen
+  currentTagInput = initializeTagInput(
+    document.querySelector('#add-item-screen #add-item-tags')
+  );
 
 });
 
