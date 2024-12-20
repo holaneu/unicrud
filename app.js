@@ -450,6 +450,11 @@ function initializeTagInput(inputElement, initialTags = []) {
     updateSuggestions(e.target.value);
   });
   
+  // Add focus event listener to show all suggestions when focused
+  input.addEventListener('focus', () => {
+    updateSuggestions(''); // Show all suggestions by passing empty query
+  });
+  
   input.addEventListener('blur', () => {
     // Small delay to allow clicking suggestions
     setTimeout(() => {
