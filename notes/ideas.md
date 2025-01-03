@@ -28,6 +28,11 @@ Refactor the code:
     - Use clear and descriptive object names that reflect the purpose of the grouped functions.
     - Ensure function names within each group are concise and relevant.
 
+  - use vanilla js only. Dont use .ts and modules as files. Do this refactoring only within the app.js and index.html files. 
+  - Note: Why I use vanilla js for my SPA web app - the app has to be:
+    - possible to run the app locally from a file:/// URL, without any server on most devices (desktop, mobile phones etc.).
+    - I dont want to use any framework, react, typescript etc. I just want the app to use the pure javascript.
+    - Also I dont want to use any techniques leading to any issues / errors when running localy (errors like CORS related etc.).
 -----
 
 tags UX:
