@@ -1,4 +1,31 @@
-# CHANGELOG
+# Changelog
+
+## [0.0.3] - 2024-01-03
+
+### Refactored
+- Reorganized code structure for better maintainability (see DEVELOPMENT.md)
+  - Created structured configuration system
+    - Split app configurations into `appConfigs` and `uiConfigs`
+    - Moved storage keys into `appConfigs.storage` namespace
+    - Centralized UI labels and messages in `uiConfigs.labels`
+  - Added DOM element organization
+    - Created `domElements` object to group element selectors by screen
+    - Implemented getter functions for DOM elements to ensure fresh retrieval
+    - Organized selectors into logical groups (home, add, edit, view)
+  - Added global state management
+    - Created `state` object to manage application state
+    - Moved global variables into structured state object
+  
+### Changed
+- Updated all functions to use new configuration and DOM structures
+- Improved error message handling through centralized UI labels
+- Enhanced tag input configuration with dedicated settings in uiConfigs
+- Streamlined screen navigation with new DOM element references
+
+### Technical Debt
+- Removed hard-coded strings in favor of configuration objects
+- Improved code maintainability through structured organization
+- Reduced selector duplication across codebase
 
 ## [0.0.2] - 2024-12-20
 

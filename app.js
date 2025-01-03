@@ -1,32 +1,78 @@
-// configs
+// App configurations
 const appConfigs = {
   app_id: "unicrud",
   app_name: "Unicrud",
-  test_key: this.app_id + "_test",
-  get db_data_key() {
-    return this.app_id + "_data";
-  },
-  get db_settings_key() {
-    return this.app_id + "_settings";
-  },
-  get db_user_profile_key() {
-    return this.app_id + "_user_profile";
-  },
+  storage: {
+    test_key: "unicrud_test",
+    get data_key() { return appConfigs.app_id + "_data"; },
+    get settings_key() { return appConfigs.app_id + "_settings"; },
+    get user_profile_key() { return appConfigs.app_id + "_user_profile"; }
+  }
 };
 
+// UI-related configurations
 const uiConfigs = {
   labels: {
-    not_saved_doc: "untitled document"
+    not_saved_doc: "untitled document",
+    empty_name_error: "Item name cannot be empty",
+    item_not_found: "Item not found!",
+    delete_confirm: "Do you really want to delete this item?",
+    update_success: "Item updated successfully!"
   },
-};  
+  tagInput: {
+    maxSuggestions: 5,
+    placeholder: "Type tag and press Enter or comma"
+  },
+  screens: {
+    home: "home-screen",
+    add: "add-item-screen",
+    edit: "edit-item-screen",
+    view: "view-item-screen"
+  }
+};
 
+// DOM element references organized by screen
+const domElements = {
+  home: {
+    screen: () => document.getElementById(uiConfigs.screens.home),
+    searchInput: () => document.getElementById('search-input'),
+    sortSelect: () => document.getElementById('sort-select'),
+    tagSelect: () => document.getElementById('tag-select'),
+    itemList: () => document.getElementById('item-list')
+  },
+  add: {
+    screen: () => document.getElementById(uiConfigs.screens.add),
+    nameInput: () => document.querySelector('#add-item-screen #add-item-name'),
+    contentInput: () => document.querySelector('#add-item-screen #add-item-content'),
+    tagsInput: () => document.querySelector('#add-item-screen #add-item-tags')
+  },
+  edit: {
+    screen: () => document.getElementById(uiConfigs.screens.edit),
+    nameInput: () => document.querySelector('#edit-item-screen #edit-item-name'),
+    contentInput: () => document.querySelector('#edit-item-screen #edit-item-content'),
+    tagsInput: () => document.querySelector('#edit-item-screen #edit-item-tags'),
+    saveButton: () => document.querySelector('#edit-item-screen #edit-item-save-btn'),
+    backButton: () => document.querySelector('#edit-item-screen .back-btn')
+  },
+  view: {
+    screen: () => document.getElementById(uiConfigs.screens.view),
+    screenTitle: () => document.querySelector('#view-item-screen .screen-title'),
+    nameField: () => document.querySelector('#view-item-screen #view-item-name'),
+    tagsField: () => document.querySelector('#view-item-screen #view-item-tags'),
+    contentField: () => document.querySelector('#view-item-screen #view-item-content'),
+    editButton: () => document.querySelector('#view-item-screen .edit-btn'),
+    deleteButton: () => document.querySelector('#view-item-screen .delete-btn')
+  }
+};
+
+// Storage service
 const db = {
   getData: function() {
-    const data = localStorage.getItem(appConfigs.db_data_key);
+    const data = localStorage.getItem(appConfigs.storage.data_key);
     return data ? JSON.parse(data) : [];
   },
   saveData: function(items) {
-    localStorage.setItem(appConfigs.db_data_key, JSON.stringify(items));
+    localStorage.setItem(appConfigs.storage.data_key, JSON.stringify(items));
   },
   addDataItem: function(item) {
     const items = this.getData();
@@ -44,28 +90,26 @@ const db = {
     this.saveData(items);
   },
   clearData: function(){
-    localStorage.setItem(appConfigs.db_data_key, "");
+    localStorage.setItem(appConfigs.storage.data_key, "");
   }
 };
 
-
-// global vars
-let currentSelectedTag = ""; // Keeps track of the selected tag
-let currentTagInput = null; // Will store the current tag input instance
-
+// Global state
+const state = {
+  currentSelectedTag: "",
+  currentTagInput: null
+};
 
 // Event listeners for UI elements
-document.getElementById('search-input').addEventListener('input', renderItems);
-document.getElementById('sort-select').addEventListener('change', renderItems);
-document.getElementById('tag-select').addEventListener('change', (event) => {
-  currentSelectedTag = event.target.value; // Update global state
+domElements.home.searchInput().addEventListener('input', renderItems);
+domElements.home.sortSelect().addEventListener('change', renderItems);
+domElements.home.tagSelect().addEventListener('change', (event) => {
+  state.currentSelectedTag = event.target.value; // Update global state
   renderItems();
 });
 
-
-
-// components
-function renderItemCard(id,name,tags){
+// Components
+function renderItemCard(id, name, tags) {
   return `
     <div class="card-item" data-id="${id}" onclick="viewItem('${id}')">
       <div class="card-content">
@@ -76,8 +120,7 @@ function renderItemCard(id,name,tags){
   `;
 }
 
-
-// functions
+// Functions
 function generateId(length = 10) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
@@ -96,23 +139,20 @@ function navigateToScreen(screenId) {
   targetScreen.classList.remove('hidden');
   
   // Initialize tag inputs for the new screen if needed
-  if (screenId === 'add-item-screen') {
-    currentTagInput = initializeTagInput(
-      document.querySelector('#add-item-screen #add-item-tags')
-    );
+  if (screenId === uiConfigs.screens.add) {
+    state.currentTagInput = initializeTagInput(domElements.add.tagsInput());
   }
 }
 
 function renderItems() {
-  const searchQuery = document.getElementById('search-input').value.toLowerCase();
-  const sortCriteria = document.getElementById('sort-select').value;
-  const selectedTag = document.getElementById('tag-select').value;
+  const searchQuery = domElements.home.searchInput().value.toLowerCase();
+  const sortCriteria = domElements.home.sortSelect().value;
+  const selectedTag = domElements.home.tagSelect().value;
 
   let items = db.getData();
 
   // Ensure the dropdown reflects the selected filter
-  const tagSelect = document.getElementById('tag-select');
-  tagSelect.value = selectedTag;
+  domElements.home.tagSelect().value = selectedTag;
 
   if (searchQuery) {
     items = items.filter(item => 
@@ -139,7 +179,7 @@ function renderItems() {
     items.sort((a, b) => b.created - a.created);
   }
 
-  const itemList = document.getElementById('item-list');
+  const itemList = domElements.home.itemList();
   itemList.innerHTML = '';
 
   items.forEach(item => {
@@ -149,15 +189,12 @@ function renderItems() {
   });
 }
 
-
-
-
 function createItem() {
-  const formName = document.querySelector('#add-item-screen #add-item-name');
-  const formContent = document.querySelector('#add-item-screen #add-item-content');
+  const formName = domElements.add.nameInput();
+  const formContent = domElements.add.contentInput();
   
   if (formName.value.trim() === '') {
-    alert('Item name cannot be empty');
+    alert(uiConfigs.labels.empty_name_error);
     return;
   }
   
@@ -166,7 +203,7 @@ function createItem() {
     name: formName.value.trim(),
     created: Date.now(),
     modified: Date.now(),
-    tags: currentTagInput.getTags(), // Use currentTagInput instead of tagInput
+    tags: state.currentTagInput.getTags(), // Use currentTagInput instead of tagInput
     content: formContent.value.trim(),
   };
   
@@ -178,12 +215,12 @@ function createItem() {
   const createAnother = confirm("Item added successfully. Would you like to create another item?");
   
   if (!createAnother) {
-    navigateToScreen('home-screen');
+    navigateToScreen(uiConfigs.screens.home);
   } else {
     // Clear form for next item
     formName.value = '';
     formContent.value = '';
-    currentTagInput = initializeTagInput(document.querySelector('#add-item-screen #add-item-tags')); // Reinitialize tags
+    state.currentTagInput = initializeTagInput(domElements.add.tagsInput()); // Reinitialize tags
     formName.focus();
   }
 }
@@ -193,33 +230,27 @@ function viewItem(viewedItemId) {
   const item = items.find(i => i.id === viewedItemId);
 
   if(!item) {
-    alert("Item not found!");
+    alert(uiConfigs.labels.item_not_found);
     return;
   }
 
-  const uiScreenTitle = document.querySelector('#view-item-screen .screen-title');
-  const uiItemName = document.querySelector('#view-item-screen #view-item-name'); 
-  const uiItemTags = document.querySelector('#view-item-screen #view-item-tags'); 
-  const uiItemContent = document.querySelector('#view-item-screen #view-item-content'); 
-  const uiEditBtn = document.querySelector('#view-item-screen .edit-btn');
-  const uiDeleteBtn = document.querySelector('#view-item-screen .delete-btn');
-
-  uiScreenTitle.innerText = item.name ? item.name : 'View item';
-  uiItemName.innerText = item.name ? 'Name: ' + item.name : '';
-  uiItemTags.innerText = item.tags ? 'Tags: ' + item.tags.join(', ') : '';
-  uiItemContent.innerText = item.content ? 'Content: \n' + item.content : '';
+  const elements = domElements.view;
+  elements.screenTitle().innerText = item.name || 'View item';
+  elements.nameField().innerText = item.name ? 'Name: ' + item.name : '';
+  elements.tagsField().innerText = item.tags ? 'Tags: ' + item.tags.join(', ') : '';
+  elements.contentField().innerText = item.content ? 'Content: \n' + item.content : '';
   
-  uiEditBtn.onclick = () => editItem(item.id);
-  uiDeleteBtn.onclick = () => deleteItem(item.id);
+  elements.editButton().onclick = () => editItem(item.id);
+  elements.deleteButton().onclick = () => deleteItem(item.id);
 
-  navigateToScreen("view-item-screen"); 
+  navigateToScreen(uiConfigs.screens.view);
 }
 
 function deleteItem(itemId) {
-  if (confirm("Do you really want to delete this item?")) {
+  if (confirm(uiConfigs.labels.delete_confirm)) {
     db.deleteDataItem(itemId);
     renderItems();
-    navigateToScreen("home-screen");
+    navigateToScreen(uiConfigs.screens.home);
   }
 }
 
@@ -229,28 +260,28 @@ function editItem(editedItemId) {
   const item = items.find(i => i.id === editedItemId);
 
   if (!item) {
-    alert("Item not found!");
+    alert(uiConfigs.labels.item_not_found);
     return;
   }
 
   // First navigate to edit screen
-  navigateToScreen("edit-item-screen");
+  navigateToScreen(uiConfigs.screens.edit);
 
   // Then initialize the form
-  const formName = document.querySelector('#edit-item-screen #edit-item-name');
-  const formContent = document.querySelector('#edit-item-screen #edit-item-content');
-  const formTags = document.querySelector('#edit-item-screen #edit-item-tags');
+  const formName = domElements.edit.nameInput();
+  const formContent = domElements.edit.contentInput();
+  const formTags = domElements.edit.tagsInput();
   
   formName.value = item.name || '';
   formContent.value = item.content || '';
 
   // Initialize tag input with existing tags
-  currentTagInput = initializeTagInput(formTags, item.tags || []);
+  state.currentTagInput = initializeTagInput(formTags, item.tags || []);
   
-  const backBtn = document.querySelector('#edit-item-screen .back-btn');
+  const backBtn = domElements.edit.backButton();
   backBtn.onclick = () => viewItem(editedItemId);
 
-  const formSaveBtn = document.querySelector('#edit-item-screen #edit-item-save-btn');
+  const formSaveBtn = domElements.edit.saveButton();
   formSaveBtn.onclick = function () {
     saveEditedItem(editedItemId);
     viewItem(editedItemId);
@@ -258,11 +289,11 @@ function editItem(editedItemId) {
 }
 
 function saveEditedItem(itemId) {
-  const formName = document.querySelector('#edit-item-screen #edit-item-name');
-  const formContent = document.querySelector('#edit-item-screen #edit-item-content');
+  const formName = domElements.edit.nameInput();
+  const formContent = domElements.edit.contentInput();
 
   if (formName.value.trim() === '') {
-    alert("Item name cannot be empty");
+    alert(uiConfigs.labels.empty_name_error);
     return;
   }
 
@@ -270,28 +301,26 @@ function saveEditedItem(itemId) {
   const originalItem = items.find(item => item.id === itemId);
 
   if (!originalItem) {
-    alert("Item not found!");
+    alert(uiConfigs.labels.item_not_found);
     return;
   }
 
   const updatedItem = {
     ...originalItem,
     name: formName.value.trim(),
-    tags: currentTagInput.getTags(), // Add tags from currentTagInput
+    tags: state.currentTagInput.getTags(), // Add tags from currentTagInput
     content: formContent.value.trim(),
     modified: Date.now()
   };
 
   db.updateDataItem(updatedItem);
   populateTagSelect();
-  document.getElementById('tag-select').value = currentSelectedTag;
+  domElements.home.tagSelect().value = state.currentSelectedTag;
   renderItems();
 
-  alert("Item updated successfully!");
-  navigateToScreen("home-screen");
+  alert(uiConfigs.labels.update_success);
+  navigateToScreen(uiConfigs.screens.home);
 }
-
-
 
 function searchItems(query, items) {
   return items.filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
@@ -328,10 +357,10 @@ function getUniqueTags(items) {
 function populateTagSelect() {
   const items = db.getData();
   const uniqueTags = getUniqueTags(items);
-  const tagSelect = document.getElementById('tag-select');
+  const tagSelect = domElements.home.tagSelect();
 
   // Preserve the currently selected tag
-  const previousSelection = currentSelectedTag || tagSelect.value;
+  const previousSelection = state.currentSelectedTag || tagSelect.value;
 
   tagSelect.innerHTML = `
     <option value="">All Tags</option>
@@ -347,7 +376,7 @@ function populateTagSelect() {
 
   // Restore the previous selection
   tagSelect.value = previousSelection;
-  currentSelectedTag = previousSelection; // Update global state
+  state.currentSelectedTag = previousSelection; // Update global state
 }
 
 // Add this new function for tag input component
@@ -368,7 +397,7 @@ function initializeTagInput(inputElement, initialTags = []) {
   
   const input = document.createElement('input');
   input.type = 'text';
-  input.placeholder = 'Type tag and press Enter or comma';
+  input.placeholder = uiConfigs.tagInput.placeholder;
   input.className = 'tag-input';
   
   const suggestionsContainer = document.createElement('div');
@@ -423,7 +452,7 @@ function initializeTagInput(inputElement, initialTags = []) {
         tag.toLowerCase().includes(query.toLowerCase()) && 
         !tags.includes(tag)
       )
-      .slice(0, 5); // Show max 5 suggestions
+      .slice(0, uiConfigs.tagInput.maxSuggestions); // Show max suggestions
     
     if (matchingTags.length && query) {
       suggestionsContainer.innerHTML = matchingTags
@@ -506,11 +535,10 @@ function cleanupTagInputs() {
   });
 }
 
-// page initialization      
+// Page initialization      
 window.addEventListener('DOMContentLoaded', () => {
-  
   populateTagSelect();
-  currentSelectedTag = document.getElementById('tag-select').value; // Initialize selected tag
+  state.currentSelectedTag = domElements.home.tagSelect().value; // Initialize selected tag
   renderItems();
 
   const clearButtons = document.querySelectorAll(".clear-input");    
@@ -530,9 +558,6 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   // Initialize empty tag input for add screen
-  currentTagInput = initializeTagInput(
-    document.querySelector('#add-item-screen #add-item-tags')
-  );
-
+  state.currentTagInput = initializeTagInput(domElements.add.tagsInput());
 });
 
