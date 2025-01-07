@@ -1,9 +1,14 @@
 # IDEAS
 
+## automated testing
+- use ai to write test scenarios
+- use ai to write a python sellenium script runing the sequence of testing scenarios
+
+-----
+
 ## settings screen
 - export data
 - import data
-- 
 
 -----
 
