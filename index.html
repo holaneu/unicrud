@@ -15,7 +15,7 @@
         <div class="top-nav-bar">
           <h2 class="logo">Unicrud</h2>
           <div class="flex-right">        
-            <button class="btn btn-primary" onclick="navigateToScreen('add-item-screen')">+ add</button>
+            <button class="btn btn-primary" onclick="navigation.toScreen('add-item-screen')">+ add</button>
           </div>
         </div>
         <div class="screen-title">Items</div>
@@ -51,7 +51,7 @@
 
       <!-- add item screen -->
       <div class="screen hidden" id="add-item-screen">
-        <div class="back-btn" onclick="navigateToScreen('home-screen');"></div>
+        <div class="back-btn" onclick="navigation.toScreen('home-screen');"></div>
         <div class="screen-title">Add item</div>
         <div class="input-container">
           <input id="add-item-name" type="text" placeholder="Enter item name" required />
@@ -61,12 +61,12 @@
           <input id="add-item-tags" type="text" placeholder="Enter tags (comma separated)" />
         </div>
         <textarea id="add-item-content" placeholder="Enter content"></textarea>        
-        <button class="btn btn-primary" onclick="createItem()">Add Item</button>
+        <button class="btn btn-primary" onclick="itemManager.create()">Add Item</button>
       </div>
 
       <!-- edit item screen -->
       <div class="screen hidden" id="edit-item-screen">
-        <div class="back-btn" onclick="navigateToScreen('home-screen');"></div>
+        <div class="back-btn" onclick="navigation.toScreen('home-screen');"></div>
         <div class="screen-title">Edit item</div>
         <div class="input-container">
           <input id="edit-item-name" type="text" placeholder="Enter item name" required />
@@ -82,10 +82,10 @@
       <!-- view item screen -->
       <div class="screen hidden" id="view-item-screen">
         <div class="top-nav-bar">
-          <div class="back-btn" onclick="navigateToScreen('home-screen');"></div>
+          <div class="back-btn" onclick="navigation.toScreen('home-screen');"></div>
           <div class="flex-right">
-            <button class="icon-btn edit-btn" onclick=""></button>
-            <button class="icon-btn delete-btn" onclick=""></button>
+            <button class="icon-btn edit-btn"></button>
+            <button class="icon-btn delete-btn"></button>
           </div>
         </div>
         <div class="screen-title">View item</div>

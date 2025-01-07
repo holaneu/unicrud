@@ -1,5 +1,29 @@
 # Changelog
 
+
+## [0.0.4] - 2024-01-07
+
+### Refactored
+- Reorganized JavaScript into logical modules:
+  - `storage` - Local storage operations
+  - `uiComponents` - UI rendering components
+  - `utils` - Common utility functions
+  - `navigation` - Screen management
+  - `itemManager` - CRUD operations
+  - `listManager` - List rendering and filtering
+  - `tagManager` - Tag operations and UI
+
+### Changed
+- Updated HTML onclick handlers to use module-based method calls
+  - Changed `navigateToScreen()` to `navigation.toScreen()`
+  - Changed `createItem()` to `itemManager.create()`
+  - Removed redundant onclick handlers from edit/delete buttons
+- Improved code maintainability through structured organization
+- Enhanced function reusability via modular grouping
+- Reduced global namespace pollution
+
+
+
 ## [0.0.3] - 2024-01-03
 
 ### Refactored
@@ -27,6 +51,8 @@
 - Improved code maintainability through structured organization
 - Reduced selector duplication across codebase
 
+
+
 ## [0.0.2] - 2024-12-20
 
 ### Added
@@ -51,6 +77,7 @@
 - Enhanced error handling for tag-related operations
 
 
+
 ## [0.0.1] - 2024-12-19
 
 - **View Screen Enhancements:**
@@ -65,6 +92,3 @@
   - Implemented save functionality to return to the view screen after edits.
   - Included delete confirmation prompt before deletion.
   - Adjusted edit screen's back button to return to the view screen instead of the list.
-
-
-
