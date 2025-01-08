@@ -1,5 +1,82 @@
 # Development History
 
+
+## Import/Export Data Implementation (2024-01-08)
+Refering to changelog [0.0.5]
+
+### Prompt
+Implement data import and export functionality inspired by the textio app, including:
+- Settings screen with import/export buttons
+- Proper UI integration via settings icon
+- Robust data handling with conflict resolution
+
+### Implementation Details
+
+1. Created settings screen with data management options:
+```javascript
+const storage = {
+  exportData() {
+    // Export current data as JSON file
+    // Include timestamp in filename
+  },
+  
+  importData() {
+    // Handle file selection and reading
+    // Validate JSON format
+    // Merge data with conflict resolution
+    // Update UI components
+  }
+};
+```
+
+2. Added UI elements:
+- Settings icon in navigation bar
+- Settings screen with export/import buttons
+- Consistent styling with existing UI
+
+3. Implemented data merge strategy:
+   - Preserve existing items by default
+   - Update items if imported version is newer
+   - Add new items from import
+   - Handle duplicate IDs gracefully
+
+4. Added user safeguards:
+   - Confirmation prompt before import
+   - Format validation
+   - Error handling with user feedback
+   - Success notifications
+
+### Benefits
+
+1. Data Management:
+   - Easy backup creation
+   - Data portability between devices
+   - Safe data restoration
+   - Conflict-aware merging
+
+2. User Experience:
+   - Intuitive settings access
+   - Clear import/export options
+   - Informative feedback messages
+   - Safe data handling
+
+3. Technical Implementation:
+   - Modular storage extension
+   - Clean UI integration
+   - Robust error handling
+   - Maintainable structure
+
+### Related Changes
+
+- Added settings screen to index.html
+- Extended storage module with import/export
+- Added settings icon styles
+- Updated CHANGELOG.md with version 0.0.5
+
+
+-----
+
+
 ## Modular Code Organization (2024-01-07)
 Refering to changelog [0.0.4]
 
@@ -27,7 +104,18 @@ Refering to changelog [0.0.4]
 ```javascript
 const storage = {
   getData(), saveData(), addDataItem(),
-  deleteDataItem(), updateDataItem(), clearData()
+  deleteDataItem(), updateDataItem(), clearData(),
+  exportData() {
+    // Export current data as JSON file
+    // Include timestamp in filename
+  },
+  
+  importData() {
+    // Handle file selection and reading
+    // Validate JSON format
+    // Merge data with conflict resolution
+    // Update UI components
+  }
 };
 
 const itemManager = {
@@ -98,7 +186,9 @@ const navigation = {
 - Removed redundant onclick handlers
 - Fixed tag suggestions scope issue
 
+
 -----
+
 
 ## Code Organization Refactoring (2024-01-03)
 Refering to changelog [0.0.3]
@@ -188,5 +278,3 @@ const domElements = {
 - Updated CHANGELOG.md with version 0.0.3
 - Modified all functions to use new configuration and DOM structures
 - Added comments explaining the new organization
-
-

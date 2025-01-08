@@ -14,7 +14,8 @@
       <div class="screen" id="home-screen">
         <div class="top-nav-bar">
           <h2 class="logo">Unicrud</h2>
-          <div class="flex-right">        
+          <div class="flex-right">
+            <button class="icon-btn settings-btn" onclick="navigation.toScreen('settings-screen')"></button>        
             <button class="btn btn-primary" onclick="navigation.toScreen('add-item-screen')">+ add</button>
           </div>
         </div>
@@ -92,6 +93,15 @@
         <div id="view-item-name"></div>
         <div id="view-item-tags"></div>
         <div id="view-item-content"></div>
+      </div>
+
+      <!-- settings screen -->
+      <div class="screen hidden" id="settings-screen">
+        <div class="back-btn" onclick="navigation.toScreen('home-screen');"></div>
+        <div class="screen-title">Settings</div>
+        
+        <button class="btn" onclick="storage.exportData()">Export Data</button>
+        <button class="btn" onclick="storage.importData()">Import Data</button>
       </div>
 
     </div>  

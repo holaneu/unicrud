@@ -91,6 +91,90 @@ const storage = {
   },
   clearData() {
     localStorage.setItem(appConfigs.storage.data_key, "");
+  },
+  exportData() {
+    const data = this.getData();
+    const exportData = JSON.stringify(data, null, 2);
+    const blob = new Blob([exportData], { type: 'application/json' });
+    const link = document.createElement('a');
+    
+    link.href = URL.createObjectURL(blob);
+    link.download = `${appConfigs.app_id}_export_${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  },
+
+  importData() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'application/json';
+    
+    fileInput.addEventListener('change', event => {
+      const file = event.target.files[0];
+      if (!file) {
+        alert('No file selected');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (!Array.isArray(importedData)) {
+            throw new Error('Invalid format');
+          }
+
+          const confirmation = confirm(
+            'Importing data may overwrite existing items. Do you want to continue?'
+          );
+          
+          if (!confirmation) return;
+
+          const currentData = this.getData();
+          const mergedData = [];
+          const seenIds = new Set();
+
+          // Process current data first
+          currentData.forEach(item => {
+            seenIds.add(item.id);
+            mergedData.push(item);
+          });
+
+          // Process imported data, handling duplicates
+          importedData.forEach(importedItem => {
+            if (seenIds.has(importedItem.id)) {
+              // Handle duplicate ID - find existing item
+              const existingItem = mergedData.find(item => item.id === importedItem.id);
+              
+              // Update if imported is newer
+              if (existingItem && importedItem.modified > existingItem.modified) {
+                Object.assign(existingItem, importedItem);
+              }
+            } else {
+              // New item
+              seenIds.add(importedItem.id);
+              mergedData.push(importedItem);
+            }
+          });
+
+          // Save merged data
+          this.saveData(mergedData);
+          
+          // Refresh UI
+          listManager.renderItems();
+          tagManager.populateTagSelect();
+          
+          alert('Data successfully imported');
+        } catch (error) {
+          console.error('Import error:', error);
+          alert('Failed to import data. Invalid format.');
+        }
+      };
+
+      reader.readAsText(file);
+    });
+
+    fileInput.click();
   }
 };
 

@@ -1,5 +1,15 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+## [0.0.5] - 2024-01-08
+
+### Added
+- Settings screen accessible via gear icon in top navigation
+- Data export functionality allowing users to save their data as JSON file
+- Data import functionality with conflict resolution for duplicate items
+- Improved icon button styling with consistent spacing and hover effects
+
 
 ## [0.0.4] - 2024-01-07
 
