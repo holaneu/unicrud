@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.6] - 2024-01-10
+
+### Added
+- Clear button functionality for input fields
+  - Shows only when input contains text
+  - Clears input on click
+  - Preserves focus after clearing
+  - Proper event handling for search updates
+- Memory efficient event listener management for input clear buttons
+  - WeakMap storage for listeners
+  - Cleanup of old listeners before adding new ones
+  - Prevention of listener duplication
+
+
 ## [0.0.5] - 2024-01-08
 
 ### Added
