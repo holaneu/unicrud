@@ -6,9 +6,10 @@
 
 -----
 
-## settings screen
-- export data
-- import data
+## status messages
+- item added
+- item updated
+- data imported
 
 -----
 

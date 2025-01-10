@@ -33,6 +33,11 @@ const uiConfigs = {
 
 // DOM element references organized by screen
 const domElements = {
+  inputs: {
+    search: () => document.getElementById('search-input'),
+    addItemName: () => document.getElementById('add-item-name'),
+    editItemName: () => document.getElementById('edit-item-name')
+  },
   home: {
     screen: () => document.getElementById(uiConfigs.screens.home),
     searchInput: () => document.getElementById('search-input'),
@@ -134,33 +139,26 @@ const storage = {
           const mergedData = [];
           const seenIds = new Set();
 
-          // Process current data first
           currentData.forEach(item => {
             seenIds.add(item.id);
             mergedData.push(item);
           });
 
-          // Process imported data, handling duplicates
           importedData.forEach(importedItem => {
             if (seenIds.has(importedItem.id)) {
-              // Handle duplicate ID - find existing item
               const existingItem = mergedData.find(item => item.id === importedItem.id);
               
-              // Update if imported is newer
               if (existingItem && importedItem.modified > existingItem.modified) {
                 Object.assign(existingItem, importedItem);
               }
             } else {
-              // New item
               seenIds.add(importedItem.id);
               mergedData.push(importedItem);
             }
           });
 
-          // Save merged data
           this.saveData(mergedData);
           
-          // Refresh UI
           listManager.renderItems();
           tagManager.populateTagSelect();
           
@@ -212,8 +210,16 @@ const navigation = {
     targetScreen.classList.remove('hidden');
     
     if (screenId === uiConfigs.screens.add) {
+      // Clear form when navigating to add screen
+      const formName = domElements.add.nameInput();
+      const formContent = domElements.add.contentInput();
+      formName.value = '';
+      formContent.value = '';
       state.currentTagInput = tagManager.initializeTagInput(domElements.add.tagsInput());
     }
+
+    // Re-initialize clear buttons when screen changes
+    uiManager.initializeClearButtons();
   }
 };
 
@@ -459,7 +465,6 @@ const tagManager = {
       };
     }
 
-    // Store reference to tagManager.getUniqueTags
     const getUniqueTags = this.getUniqueTags;
     
     const container = document.createElement('div');
@@ -513,7 +518,7 @@ const tagManager = {
     }
     
     function updateSuggestions(query) {
-      const allTags = getUniqueTags(storage.getData()); // Use stored reference
+      const allTags = getUniqueTags(storage.getData());
       const matchingTags = allTags
         .filter(tag => 
           tag.toLowerCase().includes(query.toLowerCase()) && 
@@ -595,41 +600,90 @@ const tagManager = {
   }
 };
 
+// UI Manager Module
+const uiManager = {
+  clearInputListeners: new WeakMap(), // Store listeners for cleanup
+
+  initializeClearButtons() {
+    const inputsWithClear = [
+      domElements.inputs.search(),
+      domElements.inputs.addItemName(),
+      domElements.inputs.editItemName()
+    ];
+
+    inputsWithClear.forEach(input => {
+      if (!input) return;
+      
+      const clearButton = input.parentElement.querySelector('.clear-input');
+      if (!clearButton) return;
+
+      // Clean up existing listeners
+      const oldListeners = this.clearInputListeners.get(input);
+      if (oldListeners) {
+        input.removeEventListener('input', oldListeners.input);
+        clearButton.removeEventListener('click', oldListeners.click);
+      }
+
+      // Create new listeners
+      const inputListener = () => {
+        clearButton.style.display = input.value.length > 0 ? 'flex' : 'none';
+      };
+
+      const clickListener = () => {
+        input.value = '';
+        clearButton.style.display = 'none';
+        input.focus();
+        input.dispatchEvent(new Event('input'));
+      };
+
+      // Store listeners for future cleanup
+      this.clearInputListeners.set(input, {
+        input: inputListener,
+        click: clickListener
+      });
+
+      // Add new listeners
+      input.addEventListener('input', inputListener);
+      clearButton.addEventListener('click', clickListener);
+
+      // Initial state
+      clearButton.style.display = input.value.length > 0 ? 'flex' : 'none';
+    });
+  }
+};
+
 // Global state
 const state = {
   currentSelectedTag: "",
   currentTagInput: null
 };
 
-// Event listeners for UI elements
-domElements.home.searchInput().addEventListener('input', listManager.renderItems);
-domElements.home.sortSelect().addEventListener('change', listManager.renderItems);
-domElements.home.tagSelect().addEventListener('change', (event) => {
-  state.currentSelectedTag = event.target.value;
-  listManager.renderItems();
-});
+// Event listeners for UI elements - Move these into a separate initialization function
+function initializeEventListeners() {
+  // Remove existing listeners first
+  const searchInput = domElements.home.searchInput();
+  const sortSelect = domElements.home.sortSelect();
+  const tagSelect = domElements.home.tagSelect();
+  
+  searchInput.removeEventListener('input', listManager.renderItems);
+  sortSelect.removeEventListener('change', listManager.renderItems);
+  
+  // Add new listeners
+  searchInput.addEventListener('input', listManager.renderItems);
+  sortSelect.addEventListener('change', listManager.renderItems);
+  tagSelect.addEventListener('change', (event) => {
+    state.currentSelectedTag = event.target.value;
+    listManager.renderItems();
+  });
+}
 
 // Page initialization      
 window.addEventListener('DOMContentLoaded', () => {
+  uiManager.initializeClearButtons();
   tagManager.populateTagSelect();
   state.currentSelectedTag = domElements.home.tagSelect().value;
   listManager.renderItems();
-
-  const clearButtons = document.querySelectorAll(".clear-input");    
-  clearButtons.forEach(button => {
-    button.addEventListener("click", () => {
-      const inputContainer = button.closest(".input-container");
-      const inputField = inputContainer && inputContainer.querySelector("input");
-      if (inputField) {
-        inputField.value = "";
-        if (inputField.id === 'search-input') {
-          const event = new Event('input', { bubbles: true });
-          inputField.dispatchEvent(event);
-        }
-      }         
-    });
-  });
-
   state.currentTagInput = tagManager.initializeTagInput(domElements.add.tagsInput());
+  initializeEventListeners();
 });
 
