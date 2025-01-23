@@ -1,34 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test CRUD App</title>
+    <title>Unicrud</title>
     <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div id="app">
-        <h1>Test App</h1>
+  </head>
+  <body>
 
-        <div id="create-section">
-            <input id="item-name" type="text" placeholder="Enter item name" required>
-            <input id="item-tags" type="text" placeholder="Enter tags (comma separated)">
-            <button id="create-button">Add Item</button>
+    <div class="app-container">
+
+      <!-- home screen -->
+      <div class="screen" id="home-screen">
+        <div class="top-nav-bar">
+          <h2 class="logo">Unicrud</h2>
+          <div class="flex-right">
+            <button class="icon-btn settings-btn" onclick="navigation.toScreen('settings-screen')"></button>        
+            <button class="btn btn-primary" onclick="navigation.toScreen('add-item-screen')">+ add</button>
+          </div>
         </div>
-
+        <div class="screen-title">Items</div>
         <div id="controls">
-            <input id="search-input" type="text" placeholder="Search items">
-            <select id="sort-select">
-                <option value="name-asc">Name (A-Z)</option>
-                <option value="name-desc">Name (Z-A)</option>
-                <option value="created-asc">Created (Oldest first)</option>
-                <option value="created-desc">Created (Newest first)</option>
-            </select>
-        </div>
 
-        <ul id="item-list"></ul>
-    </div>
+          <div class="input-container">
+            <input type="text" id="search-input" placeholder="Search items" />
+            <button class="clear-input"></button>
+          </div>
+
+          <select id="sort-select">             
+              <option value="created-desc">Created (Newest first)</option>
+              <option value="created-asc">Created (Oldest first)</option>
+              <option value="name-asc">Name (A-Z)</option>
+              <option value="name-desc">Name (Z-A)</option>
+              <option value="modified-desc">Modified (Newest first)</option>
+              <option value="modified-asc">Modified (Oldest first)</option>
+          </select> 
+
+          <!--<div class="input-container">
+            <button id="tag-filter-btn">Tags</button>
+            <div id="tag-dropdown" class="dropdown hidden"></div>
+          </div>-->
+
+          <select id="tag-select">
+            <option value="">All Tags</option> <!-- Default option -->
+          </select>          
+          
+        </div>
+        
+        <ul class="card-list" id="item-list"></ul>
+      </div>
+
+      <!-- add item screen -->
+      <div class="screen hidden" id="add-item-screen">
+        <div class="back-btn" onclick="navigation.toScreen('home-screen');"></div>
+        <div class="screen-title">Add item</div>
+        <div class="input-container">
+          <input id="add-item-name" type="text" placeholder="Enter item name" required />
+          <button class="clear-input"></button>
+        </div>
+        <div class="input-container">
+          <input id="add-item-tags" type="text" placeholder="Enter tags (comma separated)" />
+        </div>
+        <textarea id="add-item-content" placeholder="Enter content"></textarea>        
+        <button class="btn btn-primary" onclick="itemManager.create()">Add Item</button>
+      </div>
+
+      <!-- edit item screen -->
+      <div class="screen hidden" id="edit-item-screen">
+        <div class="back-btn" onclick="navigation.toScreen('home-screen');"></div>
+        <div class="screen-title">Edit item</div>
+        <div class="input-container">
+          <input id="edit-item-name" type="text" placeholder="Enter item name" required />
+          <button class="clear-input"></button>
+        </div>
+        <div class="input-container">
+          <input id="edit-item-tags" type="text" placeholder="Enter tags (comma separated)" />
+        </div>
+        <textarea id="edit-item-content" placeholder="Enter content"></textarea>        
+        <button class="btn btn-primary" id="edit-item-save-btn">Save item</button>
+      </div>
+
+      <!-- view item screen -->
+      <div class="screen hidden" id="view-item-screen">
+        <div class="top-nav-bar">
+          <div class="back-btn" onclick="navigation.toScreen('home-screen');"></div>
+          <div class="flex-right">
+            <button class="icon-btn edit-btn"></button>
+            <button class="icon-btn delete-btn"></button>
+          </div>
+        </div>
+        <div class="screen-title">View item</div>
+        <div id="view-item-name"></div>
+        <div id="view-item-tags"></div>
+        <div id="view-item-content"></div>
+      </div>
+
+      <!-- settings screen -->
+      <div class="screen hidden" id="settings-screen">
+        <div class="back-btn" onclick="navigation.toScreen('home-screen');"></div>
+        <div class="screen-title">Settings</div>
+        
+        <button class="btn" onclick="storage.exportData()">Export Data</button>
+        <button class="btn" onclick="storage.importData()">Import Data</button>
+      </div>
+
+    </div>  
 
     <script src="app.js"></script>
-</body>
+
+  </body>
 </html>
