@@ -418,6 +418,7 @@ textarea {
   padding: 5px;
   margin-bottom: 10px;
   min-height: 44px;
+  width: 100%;
 }
 
 .tag-list {
