@@ -246,18 +246,6 @@ const itemManager = {
     storage.addDataItem(newItem);
     listManager.renderItems();
     tagManager.populateTagSelect();
-    
-    /* REMOVE:
-    const createAnother = confirm("Item added successfully. Would you like to create another item?");    
-    if (!createAnother) {
-      navigation.toScreen(uiConfigs.screens.home);
-    } else {
-      formName.value = '';
-      formContent.value = '';
-      state.currentTagInput = tagManager.initializeTagInput(domElements.add.tagsInput());
-      formName.focus();
-    }
-    */
 
     navigation.toScreen(uiConfigs.screens.home);
   },
@@ -351,9 +339,6 @@ const itemManager = {
     domElements.home.tagSelect().value = state.currentSelectedTag;
     listManager.renderItems();
   
-    /*REMOVE:
-    alert(uiConfigs.labels.update_success);
-    */
     navigation.toScreen(uiConfigs.screens.home);
   }
 };
@@ -471,25 +456,25 @@ const tagManager = {
     // Bind getUniqueTags to use in updateSuggestions
     const getUniqueTags = this.getUniqueTags.bind(this);
     
-    const container = document.createElement('div');
-    container.className = 'tag-input-container';
+    const tagInputContainer = document.createElement('div');
+    tagInputContainer.className = 'tag-input-container';
     
     const tagList = document.createElement('div');
     tagList.className = 'tag-list';
     
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = uiConfigs.tagInput.placeholder;
-    input.className = 'tag-input';
+    const tagInput = document.createElement('input');
+    tagInput.className = 'tag-input';
+    tagInput.type = 'text';
+    tagInput.placeholder = uiConfigs.tagInput.placeholder;    
     
-    const suggestionsContainer = document.createElement('div');
-    suggestionsContainer.className = 'tag-suggestions hidden';
+    const tagSuggestions = document.createElement('div');
+    tagSuggestions.className = 'tag-suggestions hidden';
     
-    container.appendChild(tagList);
-    container.appendChild(input);
-    container.appendChild(suggestionsContainer);
+    tagInputContainer.appendChild(tagList);
+    tagInputContainer.appendChild(tagInput);
+    tagInputContainer.appendChild(tagSuggestions);
     
-    inputElement.parentNode.replaceChild(container, inputElement);
+    inputElement.parentNode.replaceChild(tagInputContainer, inputElement);
     
     let tags = [...initialTags];
     
@@ -515,7 +500,7 @@ const tagManager = {
           const tagToRemove = btn.dataset.tag;
           tags = tags.filter(t => t !== tagToRemove);
           renderTags();
-          updateSuggestions(input.value);
+          updateSuggestions(tagInput.value);
         };
       });
     }
@@ -525,7 +510,7 @@ const tagManager = {
       if (tagName && !tags.includes(tagName)) {
         tags.push(tagName);
         renderTags();
-        input.value = '';
+        tagInput.value = '';
         updateSuggestions('');
       }
     }
@@ -543,7 +528,7 @@ const tagManager = {
       const showNewTag = queryTrimmed && !tags.includes(queryTrimmed) && !matchingTags.includes(queryTrimmed);
       
       if (matchingTags.length || showNewTag) {
-        suggestionsContainer.innerHTML = `
+        tagSuggestions.innerHTML = `
           ${matchingTags.map(tag => `
             <div class="tag-suggestion">${tag}</div>
           `).join('')}
@@ -551,31 +536,31 @@ const tagManager = {
             <div class="tag-suggestion new-tag">${queryTrimmed}</div>
           ` : ''}
         `;
-        suggestionsContainer.classList.remove('hidden');
+        tagSuggestions.classList.remove('hidden');
       } else {
-        suggestionsContainer.classList.add('hidden');
+        tagSuggestions.classList.add('hidden');
       }
     }
     
-    input.addEventListener('focus', () => {
-      updateSuggestions(input.value);
+    tagInput.addEventListener('focus', () => {
+      updateSuggestions(tagInput.value);
     });
     
-    input.addEventListener('input', (e) => {
+    tagInput.addEventListener('input', (e) => {
       updateSuggestions(e.target.value);
     });
     
     document.addEventListener('click', (e) => {
-      if (!container.contains(e.target)) {
-        suggestionsContainer.classList.add('hidden');
+      if (!tagInputContainer.contains(e.target)) {
+        tagSuggestions.classList.add('hidden');
       }
     });
     
-    suggestionsContainer.addEventListener('click', (e) => {
+    tagSuggestions.addEventListener('click', (e) => {
       const suggestion = e.target.closest('.tag-suggestion');
       if (suggestion) {
         addTag(suggestion.textContent);
-        input.focus();
+        tagInput.focus();
         updateSuggestions('');
       }
     });
