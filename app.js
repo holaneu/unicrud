@@ -21,7 +21,7 @@ const uiConfigs = {
   },
   tagInput: {
     maxSuggestions: 5,
-    placeholder: "Type tag and press Enter or comma"
+    placeholder: "Click or write to add tags ..."
   },
   screens: {
     home: "home-screen",
@@ -246,9 +246,9 @@ const itemManager = {
     storage.addDataItem(newItem);
     listManager.renderItems();
     tagManager.populateTagSelect();
-  
-    const createAnother = confirm("Item added successfully. Would you like to create another item?");
     
+    /* REMOVE:
+    const createAnother = confirm("Item added successfully. Would you like to create another item?");    
     if (!createAnother) {
       navigation.toScreen(uiConfigs.screens.home);
     } else {
@@ -257,6 +257,9 @@ const itemManager = {
       state.currentTagInput = tagManager.initializeTagInput(domElements.add.tagsInput());
       formName.focus();
     }
+    */
+
+    navigation.toScreen(uiConfigs.screens.home);
   },
   
   view(viewedItemId) {
@@ -348,7 +351,9 @@ const itemManager = {
     domElements.home.tagSelect().value = state.currentSelectedTag;
     listManager.renderItems();
   
+    /*REMOVE:
     alert(uiConfigs.labels.update_success);
+    */
     navigation.toScreen(uiConfigs.screens.home);
   }
 };
@@ -460,12 +465,11 @@ const tagManager = {
   initializeTagInput(inputElement, initialTags = []) {
     if (!inputElement || !inputElement.parentNode) {
       console.error('Invalid input element for tag initialization');
-      return {
-        getTags: () => []
-      };
+      return { getTags: () => [] };
     }
 
-    const getUniqueTags = this.getUniqueTags;
+    // Bind getUniqueTags to use in updateSuggestions
+    const getUniqueTags = this.getUniqueTags.bind(this);
     
     const container = document.createElement('div');
     container.className = 'tag-input-container';
@@ -489,13 +493,21 @@ const tagManager = {
     
     let tags = [...initialTags];
     
-    function renderTags() {
-      tagList.innerHTML = tags.map(tag => `
+    function renderTagPill(tag) {
+      return `
         <span class="tag-pill">
           ${tag}
-          <button class="tag-remove" data-tag="${tag}">×</button>
+          <button class="tag-remove" data-tag="${tag}">
+            <svg width="12" height="12" viewBox="0 0 16 16">
+              <path fill="currentColor" d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+            </svg>
+          </button>
         </span>
-      `).join('');
+      `;
+    }
+    
+    function renderTags() {
+      tagList.innerHTML = tags.map(renderTagPill).join('');
       
       tagList.querySelectorAll('.tag-remove').forEach(btn => {
         btn.onclick = (e) => {
@@ -503,6 +515,7 @@ const tagManager = {
           const tagToRemove = btn.dataset.tag;
           tags = tags.filter(t => t !== tagToRemove);
           renderTags();
+          updateSuggestions(input.value);
         };
       });
     }
@@ -518,52 +531,52 @@ const tagManager = {
     }
     
     function updateSuggestions(query) {
-      const allTags = getUniqueTags(storage.getData());
-      const matchingTags = allTags
-        .filter(tag => 
-          tag.toLowerCase().includes(query.toLowerCase()) && 
-          !tags.includes(tag)
-        )
-        .slice(0, uiConfigs.tagInput.maxSuggestions);
+      const allTags = getUniqueTags(storage.getData()); // Use the bound method
+      const availableTags = allTags.filter(tag => !tags.includes(tag));
       
-      if (matchingTags.length && query) {
-        suggestionsContainer.innerHTML = matchingTags
-          .map(tag => `<div class="tag-suggestion">${tag}</div>`)
-          .join('');
+      let matchingTags = availableTags
+        .filter(tag => tag.toLowerCase().includes(query.toLowerCase()))
+        .sort()
+        .slice(0, 4);  // Show max 4 existing tags to leave room for the "new tag" option
+      
+      const queryTrimmed = query.trim().toLowerCase();
+      const showNewTag = queryTrimmed && !tags.includes(queryTrimmed) && !matchingTags.includes(queryTrimmed);
+      
+      if (matchingTags.length || showNewTag) {
+        suggestionsContainer.innerHTML = `
+          ${matchingTags.map(tag => `
+            <div class="tag-suggestion">${tag}</div>
+          `).join('')}
+          ${showNewTag ? `
+            <div class="tag-suggestion new-tag">${queryTrimmed}</div>
+          ` : ''}
+        `;
         suggestionsContainer.classList.remove('hidden');
       } else {
         suggestionsContainer.classList.add('hidden');
       }
     }
     
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ',') {
-        e.preventDefault();
-        addTag(input.value);
-      } else if (e.key === 'Backspace' && input.value === '' && tags.length > 0) {
-        tags.pop();
-        renderTags();
-      }
+    input.addEventListener('focus', () => {
+      updateSuggestions(input.value);
     });
     
     input.addEventListener('input', (e) => {
       updateSuggestions(e.target.value);
     });
     
-    input.addEventListener('focus', () => {
-      updateSuggestions('');
-    });
-    
-    input.addEventListener('blur', () => {
-      setTimeout(() => {
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target)) {
         suggestionsContainer.classList.add('hidden');
-      }, 200);
+      }
     });
     
     suggestionsContainer.addEventListener('click', (e) => {
-      if (e.target.classList.contains('tag-suggestion')) {
-        addTag(e.target.textContent);
+      const suggestion = e.target.closest('.tag-suggestion');
+      if (suggestion) {
+        addTag(suggestion.textContent);
         input.focus();
+        updateSuggestions('');
       }
     });
     
@@ -573,7 +586,7 @@ const tagManager = {
       getTags: () => tags
     };
   },
-  
+
   cleanupTagInputs() {
     const containers = document.querySelectorAll('.tag-input-container');
     containers.forEach(container => {
