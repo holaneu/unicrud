@@ -21,46 +21,42 @@ const uiConfigs = {
   },
   tagInput: {
     maxSuggestions: 5,
-    placeholder: "Type tag and press Enter or comma"
+    placeholder: "Click or write to add tags ..."
   },
-  screens: {
-    home: "home-screen",
-    add: "add-item-screen",
-    edit: "edit-item-screen",
-    view: "view-item-screen"
+  screenIds: {
+    homeScreenId: "home-screen",
+    addItemScreenId: "add-item-screen",
+    editItemScreenId: "edit-item-screen",
+    viewItemScreenId: "view-item-screen",
+    settingsScreenId: "settings-screen"
   }
 };
 
 // DOM element references organized by screen
 const domElements = {
-  inputs: {
-    search: () => document.getElementById('search-input'),
-    addItemName: () => document.getElementById('add-item-name'),
-    editItemName: () => document.getElementById('edit-item-name')
-  },
-  home: {
-    screen: () => document.getElementById(uiConfigs.screens.home),
+  homeScreen: {
+    screen: () => document.getElementById(uiConfigs.screenIds.homeScreenId),
     searchInput: () => document.getElementById('search-input'),
     sortSelect: () => document.getElementById('sort-select'),
     tagSelect: () => document.getElementById('tag-select'),
     itemList: () => document.getElementById('item-list')
   },
-  add: {
-    screen: () => document.getElementById(uiConfigs.screens.add),
-    nameInput: () => document.querySelector('#add-item-screen #add-item-name'),
-    contentInput: () => document.querySelector('#add-item-screen #add-item-content'),
-    tagsInput: () => document.querySelector('#add-item-screen #add-item-tags')
+  addItemScreen: {
+    screen: () => document.getElementById(uiConfigs.screenIds.addItemScreenId),
+    nameInput: () => document.querySelector(`#${uiConfigs.screenIds.addItemScreenId} #add-item-name`),
+    contentInput: () => document.querySelector(`#${uiConfigs.screenIds.addItemScreenId} #add-item-content`),
+    tagsInput: () => document.querySelector(`#${uiConfigs.screenIds.addItemScreenId} #add-item-tags`)
   },
-  edit: {
-    screen: () => document.getElementById(uiConfigs.screens.edit),
+  editItemScreen: {
+    screen: () => document.getElementById(uiConfigs.screenIds.editItemScreenId),
     nameInput: () => document.querySelector('#edit-item-screen #edit-item-name'),
     contentInput: () => document.querySelector('#edit-item-screen #edit-item-content'),
     tagsInput: () => document.querySelector('#edit-item-screen #edit-item-tags'),
     saveButton: () => document.querySelector('#edit-item-screen #edit-item-save-btn'),
     backButton: () => document.querySelector('#edit-item-screen .back-btn')
   },
-  view: {
-    screen: () => document.getElementById(uiConfigs.screens.view),
+  viewItemScreen: {
+    screen: () => document.getElementById(uiConfigs.screenIds.viewItemScreenId),
     screenTitle: () => document.querySelector('#view-item-screen .screen-title'),
     nameField: () => document.querySelector('#view-item-screen #view-item-name'),
     tagsField: () => document.querySelector('#view-item-screen #view-item-tags'),
@@ -76,27 +72,33 @@ const storage = {
     const data = localStorage.getItem(appConfigs.storage.data_key);
     return data ? JSON.parse(data) : [];
   },
+
   saveData(items) {
     localStorage.setItem(appConfigs.storage.data_key, JSON.stringify(items));
   },
+
   addDataItem(item) {
     const items = this.getData();
     items.push(item);
     this.saveData(items);
   },
+
   deleteDataItem(itemId) {
     let items = this.getData();
     items = items.filter(item => item.id !== itemId);
     this.saveData(items);
   },
+
   updateDataItem(updatedItem) {
     let items = this.getData();
     items = items.map(item => item.id === updatedItem.id ? updatedItem : item);
     this.saveData(items);
   },
+
   clearData() {
     localStorage.setItem(appConfigs.storage.data_key, "");
   },
+
   exportData() {
     const data = this.getData();
     const exportData = JSON.stringify(data, null, 2);
@@ -180,14 +182,23 @@ const storage = {
 const uiComponents = {
   renderItemCard(id, name, tags) {
     return `
-      <div class="card-item" data-id="${id}" onclick="itemManager.view('${id}')">
+      <div class="card-item" data-id="${id}">
         <div class="card-content">
           <span class="card-title">${name}</span>
           <span class="card-badge">${tags.join(', ')}</span>
         </div>
       </div>
     `;
-  }
+  },
+  /*
+  attachEventListeners() {
+    document.querySelectorAll('.card-item').forEach(item => {
+      item.addEventListener('click', function () {
+        const itemId = this.getAttribute('data-id');
+        itemManager.viewItem(itemId); 
+      });
+    });
+  }*/
 };
 
 // Utility Module
@@ -209,13 +220,13 @@ const navigation = {
     const targetScreen = document.getElementById(screenId);
     targetScreen.classList.remove('hidden');
     
-    if (screenId === uiConfigs.screens.add) {
+    if (screenId === uiConfigs.screenIds.addItemScreenId) {
       // Clear form when navigating to add screen
-      const formName = domElements.add.nameInput();
-      const formContent = domElements.add.contentInput();
+      const formName = domElements.addItemScreen.nameInput();
+      const formContent = domElements.addItemScreen.contentInput();
       formName.value = '';
       formContent.value = '';
-      state.currentTagInput = tagManager.initializeTagInput(domElements.add.tagsInput());
+      state.currentTagInput = tagManager.initializeTagInput(domElements.addItemScreen.tagsInput());
     }
 
     // Re-initialize clear buttons when screen changes
@@ -225,41 +236,32 @@ const navigation = {
 
 // Item Manager Module
 const itemManager = {
-  create() {
-    const formName = domElements.add.nameInput();
-    const formContent = domElements.add.contentInput();
+  createItem() {
+    //const formName = domElements.addItemScreen.nameInput();
+    //const formContent = domElements.addItemScreen.contentInput();
     
-    if (formName.value.trim() === '') {
+    if (domElements.addItemScreen.nameInput().value.trim() === '') {
       alert(uiConfigs.labels.empty_name_error);
       return;
     }
     
     const newItem = {
       id: utils.generateId(),
-      name: formName.value.trim(),
+      name: domElements.addItemScreen.nameInput().value.trim(),
       created: Date.now(),
       modified: Date.now(),
       tags: state.currentTagInput.getTags(),
-      content: formContent.value.trim(),
+      content: domElements.addItemScreen.contentInput().value.trim(),
     };
     
     storage.addDataItem(newItem);
     listManager.renderItems();
     tagManager.populateTagSelect();
-  
-    const createAnother = confirm("Item added successfully. Would you like to create another item?");
-    
-    if (!createAnother) {
-      navigation.toScreen(uiConfigs.screens.home);
-    } else {
-      formName.value = '';
-      formContent.value = '';
-      state.currentTagInput = tagManager.initializeTagInput(domElements.add.tagsInput());
-      formName.focus();
-    }
+
+    navigation.toScreen(uiConfigs.screenIds.homeScreenId);
   },
   
-  view(viewedItemId) {
+  viewItem(viewedItemId) {
     const items = storage.getData();
     const item = items.find(i => i.id === viewedItemId);
   
@@ -268,27 +270,27 @@ const itemManager = {
       return;
     }
   
-    const elements = domElements.view;
+    const elements = domElements.viewItemScreen;
     elements.screenTitle().innerText = item.name || 'View item';
     elements.nameField().innerText = item.name ? 'Name: ' + item.name : '';
     elements.tagsField().innerText = item.tags ? 'Tags: ' + item.tags.join(', ') : '';
     elements.contentField().innerText = item.content ? 'Content: \n' + item.content : '';
     
-    elements.editButton().onclick = () => itemManager.edit(item.id);
-    elements.deleteButton().onclick = () => itemManager.delete(item.id);
+    elements.editButton().onclick = () => itemManager.editItem(item.id);
+    elements.deleteButton().onclick = () => itemManager.deleteItem(item.id);
   
-    navigation.toScreen(uiConfigs.screens.view);
+    navigation.toScreen(uiConfigs.screenIds.viewItemScreenId);
   },
   
-  delete(itemId) {
+  deleteItem(itemId) {
     if (confirm(uiConfigs.labels.delete_confirm)) {
       storage.deleteDataItem(itemId);
       listManager.renderItems();
-      navigation.toScreen(uiConfigs.screens.home);
+      navigation.toScreen(uiConfigs.screenIds.homeScreenId);
     }
   },
   
-  edit(editedItemId) {
+  editItem(editedItemId) {
     const items = storage.getData();
     const item = items.find(i => i.id === editedItemId);
   
@@ -297,30 +299,30 @@ const itemManager = {
       return;
     }
   
-    navigation.toScreen(uiConfigs.screens.edit);
+    navigation.toScreen(uiConfigs.screenIds.editItemScreenId);
   
-    const formName = domElements.edit.nameInput();
-    const formContent = domElements.edit.contentInput();
-    const formTags = domElements.edit.tagsInput();
+    const formName = domElements.editItemScreen.nameInput();
+    const formContent = domElements.editItemScreen.contentInput();
+    const formTags = domElements.editItemScreen.tagsInput();
     
     formName.value = item.name || '';
     formContent.value = item.content || '';
   
     state.currentTagInput = tagManager.initializeTagInput(formTags, item.tags || []);
     
-    const backBtn = domElements.edit.backButton();
-    backBtn.onclick = () => itemManager.view(editedItemId);
+    const backBtn = domElements.editItemScreen.backButton();
+    backBtn.onclick = () => itemManager.viewItem(editedItemId);
   
-    const formSaveBtn = domElements.edit.saveButton();
+    const formSaveBtn = domElements.editItemScreen.saveButton();
     formSaveBtn.onclick = function () {
-      itemManager.saveEdited(editedItemId);
-      itemManager.view(editedItemId);
+      itemManager.saveEditedItem(editedItemId);
+      itemManager.viewItem(editedItemId);
     };
   },
   
-  saveEdited(itemId) {
-    const formName = domElements.edit.nameInput();
-    const formContent = domElements.edit.contentInput();
+  saveEditedItem(itemId) {
+    const formName = domElements.editItemScreen.nameInput();
+    const formContent = domElements.editItemScreen.contentInput();
   
     if (formName.value.trim() === '') {
       alert(uiConfigs.labels.empty_name_error);
@@ -345,24 +347,23 @@ const itemManager = {
   
     storage.updateDataItem(updatedItem);
     tagManager.populateTagSelect();
-    domElements.home.tagSelect().value = state.currentSelectedTag;
+    domElements.homeScreen.tagSelect().value = state.currentSelectedTag;
     listManager.renderItems();
   
-    alert(uiConfigs.labels.update_success);
-    navigation.toScreen(uiConfigs.screens.home);
+    navigation.toScreen(uiConfigs.screenIds.homeScreenId);
   }
 };
 
 // List Management Module
 const listManager = {
   renderItems() {
-    const searchQuery = domElements.home.searchInput().value.toLowerCase();
-    const sortCriteria = domElements.home.sortSelect().value;
-    const selectedTag = domElements.home.tagSelect().value;
+    const searchQuery = domElements.homeScreen.searchInput().value.toLowerCase();
+    const sortCriteria = domElements.homeScreen.sortSelect().value;
+    const selectedTag = domElements.homeScreen.tagSelect().value;
   
     let items = storage.getData();
   
-    domElements.home.tagSelect().value = selectedTag;
+    domElements.homeScreen.tagSelect().value = selectedTag;
   
     if (searchQuery) {
       items = items.filter(item => 
@@ -387,16 +388,23 @@ const listManager = {
       items.sort((a, b) => a.created - b.created);
     } else if (sortCriteria === 'created-desc') {
       items.sort((a, b) => b.created - a.created);
+    } else if (sortCriteria === 'modified-asc') {
+      items.sort((a, b) => a.modified - b.modified);
+    } else if (sortCriteria === 'modified-desc') {
+      items.sort((a, b) => b.modified - a.modified);
     }
   
-    const itemList = domElements.home.itemList();
+    const itemList = domElements.homeScreen.itemList();
     itemList.innerHTML = '';
   
     items.forEach(item => {
-      const listItem = document.createElement('li');
-      listItem.innerHTML = uiComponents.renderItemCard(item.id, item.name, item.tags);
-      itemList.appendChild(listItem);
+      const singleListItem = document.createElement('li');
+      singleListItem.innerHTML = uiComponents.renderItemCard(item.id, item.name, item.tags);
+      singleListItem.onclick = () => itemManager.viewItem(item.id);
+      itemList.appendChild(singleListItem);
     });
+
+    //uiComponents.attachEventListeners();
   },
   
   search(query, items) {
@@ -437,7 +445,7 @@ const tagManager = {
   populateTagSelect() {
     const items = storage.getData();
     const uniqueTags = this.getUniqueTags(items);
-    const tagSelect = domElements.home.tagSelect();
+    const tagSelect = domElements.homeScreen.tagSelect();
   
     const previousSelection = state.currentSelectedTag || tagSelect.value;
   
@@ -460,42 +468,49 @@ const tagManager = {
   initializeTagInput(inputElement, initialTags = []) {
     if (!inputElement || !inputElement.parentNode) {
       console.error('Invalid input element for tag initialization');
-      return {
-        getTags: () => []
-      };
+      return { getTags: () => [] };
     }
 
-    const getUniqueTags = this.getUniqueTags;
+    // Bind getUniqueTags to use in updateSuggestions
+    const getUniqueTags = this.getUniqueTags.bind(this);
     
-    const container = document.createElement('div');
-    container.className = 'tag-input-container';
+    const tagInputContainer = document.createElement('div');
+    tagInputContainer.className = 'tag-input-container';
     
     const tagList = document.createElement('div');
     tagList.className = 'tag-list';
     
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = uiConfigs.tagInput.placeholder;
-    input.className = 'tag-input';
+    const tagInput = document.createElement('input');
+    tagInput.className = 'tag-input';
+    tagInput.type = 'text';
+    tagInput.placeholder = uiConfigs.tagInput.placeholder;    
     
-    const suggestionsContainer = document.createElement('div');
-    suggestionsContainer.className = 'tag-suggestions hidden';
+    const tagSuggestions = document.createElement('div');
+    tagSuggestions.className = 'tag-suggestions hidden';
     
-    container.appendChild(tagList);
-    container.appendChild(input);
-    container.appendChild(suggestionsContainer);
+    tagInputContainer.appendChild(tagList);
+    tagInputContainer.appendChild(tagInput);
+    tagInputContainer.appendChild(tagSuggestions);
     
-    inputElement.parentNode.replaceChild(container, inputElement);
+    inputElement.parentNode.replaceChild(tagInputContainer, inputElement);
     
     let tags = [...initialTags];
     
-    function renderTags() {
-      tagList.innerHTML = tags.map(tag => `
+    function renderTagPill(tag) {
+      return `
         <span class="tag-pill">
           ${tag}
-          <button class="tag-remove" data-tag="${tag}">×</button>
+          <button class="tag-remove" data-tag="${tag}">
+            <svg width="12" height="12" viewBox="0 0 16 16">
+              <path fill="currentColor" d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+            </svg>
+          </button>
         </span>
-      `).join('');
+      `;
+    }
+    
+    function renderTags() {
+      tagList.innerHTML = tags.map(renderTagPill).join('');
       
       tagList.querySelectorAll('.tag-remove').forEach(btn => {
         btn.onclick = (e) => {
@@ -503,6 +518,7 @@ const tagManager = {
           const tagToRemove = btn.dataset.tag;
           tags = tags.filter(t => t !== tagToRemove);
           renderTags();
+          updateSuggestions(tagInput.value);
         };
       });
     }
@@ -512,58 +528,58 @@ const tagManager = {
       if (tagName && !tags.includes(tagName)) {
         tags.push(tagName);
         renderTags();
-        input.value = '';
+        tagInput.value = '';
         updateSuggestions('');
       }
     }
     
     function updateSuggestions(query) {
-      const allTags = getUniqueTags(storage.getData());
-      const matchingTags = allTags
-        .filter(tag => 
-          tag.toLowerCase().includes(query.toLowerCase()) && 
-          !tags.includes(tag)
-        )
-        .slice(0, uiConfigs.tagInput.maxSuggestions);
+      const allTags = getUniqueTags(storage.getData()); // Use the bound method
+      const availableTags = allTags.filter(tag => !tags.includes(tag));
       
-      if (matchingTags.length && query) {
-        suggestionsContainer.innerHTML = matchingTags
-          .map(tag => `<div class="tag-suggestion">${tag}</div>`)
-          .join('');
-        suggestionsContainer.classList.remove('hidden');
+      let matchingTags = availableTags
+        .filter(tag => tag.toLowerCase().includes(query.toLowerCase()))
+        .sort()
+        .slice(0, 4);  // Show max 4 existing tags to leave room for the "new tag" option
+      
+      const queryTrimmed = query.trim().toLowerCase();
+      const showNewTag = queryTrimmed && !tags.includes(queryTrimmed) && !matchingTags.includes(queryTrimmed);
+      
+      if (matchingTags.length || showNewTag) {
+        tagSuggestions.innerHTML = `
+          ${matchingTags.map(tag => `
+            <div class="tag-suggestion">${tag}</div>
+          `).join('')}
+          ${showNewTag ? `
+            <div class="tag-suggestion new-tag">${queryTrimmed}</div>
+          ` : ''}
+        `;
+        tagSuggestions.classList.remove('hidden');
       } else {
-        suggestionsContainer.classList.add('hidden');
+        tagSuggestions.classList.add('hidden');
       }
     }
     
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ',') {
-        e.preventDefault();
-        addTag(input.value);
-      } else if (e.key === 'Backspace' && input.value === '' && tags.length > 0) {
-        tags.pop();
-        renderTags();
-      }
+    tagInput.addEventListener('focus', () => {
+      updateSuggestions(tagInput.value);
     });
     
-    input.addEventListener('input', (e) => {
+    tagInput.addEventListener('input', (e) => {
       updateSuggestions(e.target.value);
     });
     
-    input.addEventListener('focus', () => {
-      updateSuggestions('');
+    document.addEventListener('click', (e) => {
+      if (!tagInputContainer.contains(e.target)) {
+        tagSuggestions.classList.add('hidden');
+      }
     });
     
-    input.addEventListener('blur', () => {
-      setTimeout(() => {
-        suggestionsContainer.classList.add('hidden');
-      }, 200);
-    });
-    
-    suggestionsContainer.addEventListener('click', (e) => {
-      if (e.target.classList.contains('tag-suggestion')) {
-        addTag(e.target.textContent);
-        input.focus();
+    tagSuggestions.addEventListener('click', (e) => {
+      const suggestion = e.target.closest('.tag-suggestion');
+      if (suggestion) {
+        addTag(suggestion.textContent);
+        tagInput.focus();
+        updateSuggestions('');
       }
     });
     
@@ -573,7 +589,7 @@ const tagManager = {
       getTags: () => tags
     };
   },
-  
+
   cleanupTagInputs() {
     const containers = document.querySelectorAll('.tag-input-container');
     containers.forEach(container => {
@@ -606,9 +622,9 @@ const uiManager = {
 
   initializeClearButtons() {
     const inputsWithClear = [
-      domElements.inputs.search(),
-      domElements.inputs.addItemName(),
-      domElements.inputs.editItemName()
+      domElements.homeScreen.searchInput(),
+      domElements.addItemScreen.nameInput(),
+      domElements.editItemScreen.nameInput()
     ];
 
     inputsWithClear.forEach(input => {
@@ -661,9 +677,9 @@ const state = {
 // Event listeners for UI elements - Move these into a separate initialization function
 function initializeEventListeners() {
   // Remove existing listeners first
-  const searchInput = domElements.home.searchInput();
-  const sortSelect = domElements.home.sortSelect();
-  const tagSelect = domElements.home.tagSelect();
+  const searchInput = domElements.homeScreen.searchInput();
+  const sortSelect = domElements.homeScreen.sortSelect();
+  const tagSelect = domElements.homeScreen.tagSelect();
   
   searchInput.removeEventListener('input', listManager.renderItems);
   sortSelect.removeEventListener('change', listManager.renderItems);
@@ -681,9 +697,9 @@ function initializeEventListeners() {
 window.addEventListener('DOMContentLoaded', () => {
   uiManager.initializeClearButtons();
   tagManager.populateTagSelect();
-  state.currentSelectedTag = domElements.home.tagSelect().value;
+  state.currentSelectedTag = domElements.homeScreen.tagSelect().value;
   listManager.renderItems();
-  state.currentTagInput = tagManager.initializeTagInput(domElements.add.tagsInput());
+  state.currentTagInput = tagManager.initializeTagInput(domElements.addItemScreen.tagsInput());
   initializeEventListeners();
 });
 

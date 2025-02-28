@@ -27,13 +27,14 @@
             <button class="clear-input"></button>
           </div>
 
-          <select id="sort-select">             
-              <option value="created-desc">Created (Newest first)</option>
-              <option value="created-asc">Created (Oldest first)</option>
-              <option value="name-asc">Name (A-Z)</option>
-              <option value="name-desc">Name (Z-A)</option>
-              <option value="modified-desc">Modified (Newest first)</option>
-              <option value="modified-asc">Modified (Oldest first)</option>
+          <select id="sort-select">
+            <option value="modified-desc">Modified (Newest first)</option>
+            <option value="modified-asc">Modified (Oldest first)</option>  
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>            
+            <option value="created-desc">Created (Newest first)</option>
+            <option value="created-asc">Created (Oldest first)</option>
+                       
           </select> 
 
           <!--<div class="input-container">
@@ -59,7 +60,7 @@
           <button class="clear-input"></button>
         </div>
         <div class="input-container">
-          <input id="add-item-tags" type="text" placeholder="Enter tags (comma separated)" />
+          <input id="add-item-tags" type="text" placeholder="Click or write to add tags ..." />
         </div>
         <textarea id="add-item-content" placeholder="Enter content"></textarea>        
         <button class="btn btn-primary" onclick="itemManager.create()">Add Item</button>
@@ -74,7 +75,7 @@
           <button class="clear-input"></button>
         </div>
         <div class="input-container">
-          <input id="edit-item-tags" type="text" placeholder="Enter tags (comma separated)" />
+          <input id="edit-item-tags" type="text" placeholder="Click or write to add tags ..." />
         </div>
         <textarea id="edit-item-content" placeholder="Enter content"></textarea>        
         <button class="btn btn-primary" id="edit-item-save-btn">Save item</button>
