@@ -25,6 +25,7 @@
         }
 
         .tag-container {
+            position: relative;  /* Added */
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             padding: 12px;
@@ -77,6 +78,28 @@
 
         .tag-input::placeholder {
             color: var(--text-secondary);
+        }
+
+        .clear-all-btn {
+            position: absolute;
+            right: 12px;          /* Updated */
+            top: 12px;           /* Updated */
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 18px;
+            display: none;
+            z-index: 2;          /* Added to ensure it's above other elements */
+        }
+
+        .clear-all-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .clear-all-btn.visible {
+            display: block;
         }
 
         .tag-suggestions {
@@ -145,12 +168,14 @@
                 this.container.innerHTML = `
                     <div class="tag-list"></div>
                     <input class="tag-input" type="text" placeholder="Click or write to add tags...">
+                    <button class="clear-all-btn" title="Clear all tags">×</button>
                     <div class="tag-suggestions hidden"></div>
                 `;
 
                 this.tagList = this.container.querySelector('.tag-list');
                 this.input = this.container.querySelector('.tag-input');
                 this.suggestions = this.container.querySelector('.tag-suggestions');
+                this.clearBtn = this.container.querySelector('.clear-all-btn');
 
                 this.setupEventListeners();
                 this.targetElement.appendChild(this.container);
@@ -159,18 +184,14 @@
             setupEventListeners() {
                 this.input.addEventListener('input', () => this.handleInput());
                 this.input.addEventListener('focus', () => this.showSuggestions());
-                this.input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && this.input.value) {
-                        this.addTag(this.input.value);
-                        this.suggestions.classList.add('hidden'); // Hide suggestions on Enter
-                    }
-                });
-
+                
                 document.addEventListener('click', (e) => {
                     if (!this.container.contains(e.target)) {
                         this.suggestions.classList.add('hidden');
                     }
                 });
+
+                this.clearBtn.addEventListener('click', () => this.clearTags());
             }
 
             handleInput() {
@@ -271,6 +292,9 @@
                             this.removeTag(btn.dataset.tag)
                         );
                     });
+
+                // Update clear button visibility
+                this.clearBtn.classList.toggle('visible', this.pickedTags.length > 0);
             }
 
             getPickedTags() {
