@@ -5,68 +5,127 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tags Management Component</title>
     <style>
+        /* Dark theme colors */
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --accent: #007acc;
+            --border: #404040;
+            --tag-bg: #3d3d3d;
+            --tag-hover: #4a4a4a;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
         .tag-container {
-            border: 1px solid #ccc;
-            padding: 8px;
-            border-radius: 4px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .tag-list {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
         .tag {
-            background: #e0e0e0;
-            padding: 4px 8px;
+            background: var(--tag-bg);
+            padding: 6px 12px;
             border-radius: 16px;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .tag:hover {
+            background: var(--tag-hover);
         }
 
         .tag-remove {
             cursor: pointer;
-            color: #666;
+            color: var(--text-secondary);
             font-weight: bold;
+            padding: 0 4px;
+        }
+
+        .tag-remove:hover {
+            color: var(--text-primary);
         }
 
         .tag-input {
+            background: transparent;
             border: none;
             outline: none;
-            padding: 4px;
+            padding: 8px;
             width: 100%;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .tag-input::placeholder {
+            color: var(--text-secondary);
         }
 
         .tag-suggestions {
             position: absolute;
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
             max-height: 200px;
             overflow-y: auto;
             width: calc(100% - 2px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
         }
 
         .tag-suggestion-item {
-            padding: 8px;
+            padding: 10px 12px;
             cursor: pointer;
+            transition: background 0.2s ease;
         }
 
         .tag-suggestion-item:hover {
-            background: #f0f0f0;
+            background: var(--tag-hover);
+        }
+
+        .tag-suggestion-item.new-tag {
+            border-top: 1px solid var(--border);
+            color: var(--accent);
         }
 
         .hidden {
             display: none;
         }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            .tag-container {
+                margin: 4px;
+                padding: 8px;
+            }
+
+            .tag {
+                padding: 4px 8px;
+                font-size: 0.9rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Demo container -->
+    <!-- Demo containers -->
     <div id="demo1"></div>
     <div id="demo2"></div>
 
@@ -136,16 +195,36 @@
             }
 
             renderSuggestions(tags) {
-                this.suggestions.innerHTML = tags
+                // Sort tags using localeCompare for proper alphabet sorting including diacritics
+                const sortedTags = [...tags].sort((a, b) => 
+                    a.localeCompare(b, undefined, {sensitivity: 'base'})
+                );
+
+                let html = sortedTags
                     .map(tag => `<div class="tag-suggestion-item">${tag}</div>`)
                     .join('');
+
+                // Add "new tag" option if input doesn't exactly match existing tags
+                const inputValue = this.input.value.trim();
+                if (inputValue && !this.availableTagsRef.includes(inputValue)) {
+                    html += `
+                        <div class="tag-suggestion-item new-tag">
+                            + Add "${inputValue}"
+                        </div>
+                    `;
+                }
                 
+                this.suggestions.innerHTML = html;
                 this.suggestions.classList.remove('hidden');
 
+                // Setup click handlers for suggestions
                 this.suggestions.querySelectorAll('.tag-suggestion-item')
                     .forEach(item => {
                         item.addEventListener('click', () => {
-                            this.addTag(item.textContent);
+                            let tagToAdd = item.classList.contains('new-tag') 
+                                ? inputValue 
+                                : item.textContent;
+                            this.addTag(tagToAdd);
                             this.input.value = '';
                             this.suggestions.classList.add('hidden');
                         });
