@@ -162,6 +162,7 @@
                 this.input.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' && this.input.value) {
                         this.addTag(this.input.value);
+                        this.suggestions.classList.add('hidden'); // Hide suggestions on Enter
                     }
                 });
 
@@ -240,6 +241,7 @@
                     }
                     this.render();
                     this.input.value = '';
+                    this.suggestions.classList.add('hidden'); // Hide suggestions after adding tag
                 }
             }
 
