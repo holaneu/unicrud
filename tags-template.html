@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tags Management Component</title>
+    <style>
+        .tag-container {
+            border: 1px solid #ccc;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .tag {
+            background: #e0e0e0;
+            padding: 4px 8px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tag-remove {
+            cursor: pointer;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .tag-input {
+            border: none;
+            outline: none;
+            padding: 4px;
+            width: 100%;
+        }
+
+        .tag-suggestions {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            width: calc(100% - 2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tag-suggestion-item {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .tag-suggestion-item:hover {
+            background: #f0f0f0;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Demo container -->
+    <div id="demo1"></div>
+    <div id="demo2"></div>
+
+    <script>
+        class TagManager {
+            constructor(targetElement, initialTags = [], availableTagsRef) {
+                this.targetElement = targetElement;
+                this.pickedTags = [...initialTags];
+                this.availableTagsRef = availableTagsRef;
+                this.setupUI();
+                this.render();
+            }
+
+            setupUI() {
+                this.container = document.createElement('div');
+                this.container.className = 'tag-container';
+                this.container.innerHTML = `
+                    <div class="tag-list"></div>
+                    <input class="tag-input" type="text" placeholder="Click or write to add tags...">
+                    <div class="tag-suggestions hidden"></div>
+                `;
+
+                this.tagList = this.container.querySelector('.tag-list');
+                this.input = this.container.querySelector('.tag-input');
+                this.suggestions = this.container.querySelector('.tag-suggestions');
+
+                this.setupEventListeners();
+                this.targetElement.appendChild(this.container);
+            }
+
+            setupEventListeners() {
+                this.input.addEventListener('input', () => this.handleInput());
+                this.input.addEventListener('focus', () => this.showSuggestions());
+                this.input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && this.input.value) {
+                        this.addTag(this.input.value);
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!this.container.contains(e.target)) {
+                        this.suggestions.classList.add('hidden');
+                    }
+                });
+            }
+
+            handleInput() {
+                const value = this.input.value.toLowerCase();
+                if (!value) {
+                    this.showSuggestions();
+                    return;
+                }
+
+                const filtered = this.availableTagsRef.filter(tag => 
+                    tag.toLowerCase().includes(value) && 
+                    !this.pickedTags.includes(tag)
+                );
+
+                this.renderSuggestions(filtered);
+            }
+
+            showSuggestions() {
+                const unused = this.availableTagsRef.filter(tag => 
+                    !this.pickedTags.includes(tag)
+                );
+                this.renderSuggestions(unused);
+            }
+
+            renderSuggestions(tags) {
+                this.suggestions.innerHTML = tags
+                    .map(tag => `<div class="tag-suggestion-item">${tag}</div>`)
+                    .join('');
+                
+                this.suggestions.classList.remove('hidden');
+
+                this.suggestions.querySelectorAll('.tag-suggestion-item')
+                    .forEach(item => {
+                        item.addEventListener('click', () => {
+                            this.addTag(item.textContent);
+                            this.input.value = '';
+                            this.suggestions.classList.add('hidden');
+                        });
+                    });
+            }
+
+            addTag(tag) {
+                tag = tag.trim();
+                if (tag && !this.pickedTags.includes(tag)) {
+                    this.pickedTags.push(tag);
+                    if (!this.availableTagsRef.includes(tag)) {
+                        this.availableTagsRef.push(tag);
+                    }
+                    this.render();
+                    this.input.value = '';
+                }
+            }
+
+            removeTag(tag) {
+                this.pickedTags = this.pickedTags.filter(t => t !== tag);
+                this.render();
+            }
+
+            clearTags() {
+                this.pickedTags = [];
+                this.render();
+            }
+
+            render() {
+                this.tagList.innerHTML = this.pickedTags
+                    .map(tag => `
+                        <span class="tag">
+                            ${tag}
+                            <span class="tag-remove" data-tag="${tag}">×</span>
+                        </span>
+                    `)
+                    .join('');
+
+                this.tagList.querySelectorAll('.tag-remove')
+                    .forEach(btn => {
+                        btn.addEventListener('click', () => 
+                            this.removeTag(btn.dataset.tag)
+                        );
+                    });
+            }
+
+            getPickedTags() {
+                return [...this.pickedTags];
+            }
+        }
+
+        // Demo usage
+        const availableTags = ['javascript', 'html', 'css', 'react', 'vue', 'angular'];
+        
+        // Create first instance
+        const tagsM1 = new TagManager(
+            document.getElementById('demo1'),
+            ['javascript', 'html'],
+            availableTags
+        );
+
+        // Create second instance
+        const tagsM2 = new TagManager(
+            document.getElementById('demo2'),
+            ['css'],
+            availableTags
+        );
+    </script>
+</body>
+</html>
